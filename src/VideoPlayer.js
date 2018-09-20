@@ -29,150 +29,165 @@ import 'animate.css/animate.min.css';
 const progressSize = 80;
 const progressMargin = -progressSize / 2;
 const controlBarHeight = 30;
-const styles = theme => ({
-  root: {
-    width: '100%',
-  },
-  wrapper: {
-    position: 'relative',
-    '&:before': {
-      content: '""',
-      paddingBottom: '56.25%',
-      display: 'block',
+const styles = theme => {
+  const contrastColor = theme.palette.getContrastText(theme.palette.primary.main);
+  return {
+    root: {
+      width: '100%',
     },
-  },
-  progress: {
-    margin: `${progressMargin}px 0 0 ${progressMargin}px`,
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-  },
-  playerWrapper: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-    top: 0,
-    left: 0,
-    cursor: 'pointer',
-    '&> div': {
-      pointerEvents: 'none',
+    wrapper: {
+      position: 'relative',
+      '&:before': {
+        content: '""',
+        paddingBottom: '56.25%',
+        display: 'block',
+      },
     },
-  },
-  controlBar: {
-    height: controlBarHeight,
-    bottom: 0,
-    top: 'auto',
-  },
-  controlBarButton: {
-    marginTop: -35,
-    marginLeft: -5,
-    marginRight: -5,
-    '&:first-child': {
-      marginLeft: -30,
-    },
-    '&:last-child': {
-      marginRight: -30,
-    },
-  },
-  controlBarButtonPrimaryColor: {
-    color: 'white',
-  },
-  playPauseButton: {
-    transform: 'translate(-50%, -50%)',
-    fontSize: 100,
-    height: 'auto',
-    width: 'auto',
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    pointerEvents: 'none',
-    '&:not(.ended)::before': {
-      content: '""',
-      display: 'block',
-      borderRadius: '50%',
-      width: '50%',
-      height: '50%',
+    progress: {
+      margin: `${progressMargin}px 0 0 ${progressMargin}px`,
       position: 'absolute',
-      top: '25%',
-      left: '25%',
-      background: 'black',
-      zIndex: -1,
+      top: '50%',
+      left: '50%',
     },
-  },
-  prevNext5s: {
-    position: 'absolute',
-    top: '50%',
-    transform: 'translate(0, -50%)',
-    fontSize: 70,
-  },
-  prev5s: {
-    left: 20,
-    extend: 'prevNext5s',
-  },
-  next5s: {
-    right: 20,
-    extend: 'prevNext5s',
-  },
-  volumeControlButton: {
-    marginLeft: -5,
-    '&:first-child': {
+    playerWrapper: {
+      position: 'absolute',
+      width: '100%',
+      height: '100%',
+      top: 0,
+      left: 0,
+      cursor: 'pointer',
+      '&> div': {
+        pointerEvents: 'none',
+      },
+    },
+    controlBar: {
+      height: controlBarHeight,
+      bottom: 0,
+      top: 'auto',
+    },
+    controlBarButton: {
+      marginTop: -35,
       marginLeft: -5,
-    },
-    '&:last-child': {
       marginRight: -5,
+      '&:first-child': {
+        marginLeft: -30,
+      },
+      '&:last-child': {
+        marginRight: -30,
+      },
     },
-  },
-  volumeControlWrapper: {
-    position: 'relative',
-  },
-  volumeControl: {
-    position: 'absolute',
-    bottom: 35,
-    height: 100,
-    left: -15,
-    '&[role=slider]': {
-      height: 70,
+    controlBarButtonPrimaryColor: {
+      color: contrastColor,
     },
-  },
-  volumeControlThumb: {
-    background: 'white',
-  },
-  volumeControlTrackBefore: {
-    background: 'white',
-  },
-  volumeControlTrackAfter: {
-    background: 'white',
-  },
-  bufferProgress: {
-    marginTop: '-33px',
-  },
-  bufferProgressThumb: {
-    background: 'white',
-  },
-  bufferProgressTrackBefore: {
-    background: 'white',
-  },
-  bufferProgressTrackAfter: {
-    background: 'white',
-  },
-  settingPaper: {
-    backgroundColor: theme.palette.primary.dark,
-    fontSize: '80%',
-    width: 100,
-  },
-  settingMenuItem: {
-    color: theme.palette.getContrastText(theme.palette.primary.dark),
-    paddingTop: 5,
-    paddingBottom: 5,
-  },
-});
+    playPauseButton: {
+      transform: 'translate(-50%, -50%)',
+      fontSize: 100,
+      height: 'auto',
+      width: 'auto',
+      position: 'absolute',
+      top: '50%',
+      left: '50%',
+      pointerEvents: 'none',
+      '&:not(.ended)::before': {
+        content: '""',
+        display: 'block',
+        borderRadius: '50%',
+        width: '50%',
+        height: '50%',
+        position: 'absolute',
+        top: '25%',
+        left: '25%',
+        background: theme.palette.primary.main,
+        zIndex: -1,
+      },
+    },
+    prevNext5s: {
+      position: 'absolute',
+      top: '50%',
+      transform: 'translate(0, -50%)',
+      fontSize: 70,
+    },
+    prev5s: {
+      left: 20,
+      extend: 'prevNext5s',
+    },
+    next5s: {
+      right: 20,
+      extend: 'prevNext5s',
+    },
+    volumeControlButton: {
+      marginLeft: -5,
+      '&:first-child': {
+        marginLeft: -5,
+      },
+      '&:last-child': {
+        marginRight: -5,
+      },
+    },
+    volumeControlWrapper: {
+      position: 'relative',
+    },
+    volumeControl: {
+      position: 'absolute',
+      bottom: 35,
+      height: 100,
+      left: -15,
+      '&[role=slider]': {
+        height: 70,
+      },
+    },
+    volumeControlThumb: {
+      background: contrastColor,
+    },
+    volumeControlTrackBefore: {
+      background: contrastColor,
+    },
+    volumeControlTrackAfter: {
+      background: contrastColor,
+    },
+    bufferProgress: {
+      marginTop: '-33px',
+    },
+    bufferProgressThumb: {
+      background: contrastColor,
+    },
+    bufferProgressTrackBefore: {
+      background: contrastColor,
+    },
+    bufferProgressTrackAfter: {
+      background: contrastColor,
+    },
+    settingPaper: {
+      backgroundColor: theme.palette.primary.dark,
+      fontSize: '80%',
+      width: 100,
+    },
+    settingMenuItem: {
+      color: theme.palette.getContrastText(theme.palette.primary.dark),
+      paddingTop: 5,
+      paddingBottom: 5,
+    },
+  };
+};
 
 class VideoPlayer extends React.Component {
   static propTypes = {
     controls: PropTypes.bool,
+    src: PropTypes.string,
+    'src-240p': PropTypes.string,
+    'src-360p': PropTypes.string,
+    'src-480p': PropTypes.string,
+    'src-720p': PropTypes.string,
+    'src-1080p': PropTypes.string,
   };
   static defaultProps = {
     controls: true,
+    src: '',
+    'src-240p': '',
+    'src-360p': '',
+    'src-480p': '',
+    'src-720p': '',
+    'src-1080p': '',
   };
   state = {
     ready: false,
@@ -231,7 +246,7 @@ class VideoPlayer extends React.Component {
       // src-480p,
       // src-720p,
       // src-1080p,
-      if (!/^src-\d{3,}p$/.test(key)) {
+      if (!res[key] || !/^src-\d{3,}p$/.test(key)) {
         return;
       }
       const resolution = key.replace('src-', '');

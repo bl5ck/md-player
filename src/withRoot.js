@@ -13,7 +13,7 @@ import CssBaseline from '@material-ui/core/CssBaseline';
 
 // A theme with custom primary and secondary color.
 // It's optional.
-const theme = createMuiTheme({
+const defaultTheme = createMuiTheme({
   palette: {
     primary: purple,
     secondary: green,
@@ -33,7 +33,7 @@ function withRoot(Component) {
     <JssProvider jss={jss} generateClassName={generateClassName}>
       {/* MuiThemeProvider makes the theme available down the React tree
           thanks to React context. */}
-      <MuiThemeProvider theme={theme}>
+      <MuiThemeProvider theme={props.theme || defaultTheme}>
         {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
         <CssBaseline />
         <Component {...props} />
