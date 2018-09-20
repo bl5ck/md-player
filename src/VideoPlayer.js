@@ -30,7 +30,7 @@ const progressSize = 80;
 const progressMargin = -progressSize / 2;
 const controlBarHeight = 30;
 const styles = theme => {
-  const contrastColor = theme.palette.getContrastText(theme.palette.primary.main);
+  const primaryContrastColor = theme.palette.getContrastText(theme.palette.primary.main);
   return {
     root: {
       width: '100%',
@@ -77,7 +77,7 @@ const styles = theme => {
       },
     },
     controlBarButtonPrimaryColor: {
-      color: contrastColor,
+      color: primaryContrastColor,
     },
     playPauseButton: {
       transform: 'translate(-50%, -50%)',
@@ -137,25 +137,25 @@ const styles = theme => {
       },
     },
     volumeControlThumb: {
-      background: contrastColor,
+      background: primaryContrastColor,
     },
     volumeControlTrackBefore: {
-      background: contrastColor,
+      background: primaryContrastColor,
     },
     volumeControlTrackAfter: {
-      background: contrastColor,
+      background: primaryContrastColor,
     },
     bufferProgress: {
       marginTop: '-33px',
     },
     bufferProgressThumb: {
-      background: contrastColor,
+      background: primaryContrastColor,
     },
     bufferProgressTrackBefore: {
-      background: contrastColor,
+      background: primaryContrastColor,
     },
     bufferProgressTrackAfter: {
-      background: contrastColor,
+      background: primaryContrastColor,
     },
     settingPaper: {
       backgroundColor: theme.palette.primary.dark,
