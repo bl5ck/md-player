@@ -1,6 +1,6 @@
 import React from 'react';
 import { create } from 'jss';
-import jssPreset from 'jss-preset-default'
+import jssPreset from 'jss-preset-default';
 import JssProvider from 'react-jss/lib/JssProvider';
 import {
   MuiThemeProvider,

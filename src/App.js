@@ -5,9 +5,7 @@ import withRoot from './withRoot';
 class App extends Component {
   render() {
     const { src, ...props } = this.props;
-    return (
-      <VideoPlayer url={src} {...props} />
-    );
+    return <VideoPlayer src={src} {...props} />;
   }
 }
 
