@@ -17,7 +17,6 @@ if (themePrimary && themeSecondary) {
     require(`@material-ui/core/colors/${themePrimary}`),
     require(`@material-ui/core/colors/${themeSecondary}`),
   ]).then(([{ default: primary }, { default: secondary }]) => {
-    console.log(primary);
     const muiTheme = createMuiTheme({ palette: { primary, secondary } });
     ReactDOM.render(<App src={src || srcDefault} theme={muiTheme} {...props} />, el);
   });
