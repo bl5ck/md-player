@@ -28,7 +28,7 @@ stages:
   - coverage
   - deploy
 unit-test-player:
-  stage: unit-test
+  stage: test
   script:
   - yarn test
 build-player:
