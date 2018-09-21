@@ -2,7 +2,7 @@ image: node:8.2.0
 cache:
   key: $CI_PROJECT_NAME
   paths:
-  - vendor/ruby
+    - vendor/ruby
 before_script:
   # install ruby on rails
   - apt-get update
@@ -16,7 +16,7 @@ before_script:
   - git clone https://github.com/rbenv/ruby-build.git ~/.rbenv/plugins/ruby-build
   - echo 'export PATH="$HOME/.rbenv/plugins/ruby-build/bin:$PATH"' >> ~/.bashrc
   - exec $SHELL
-    
+
   - rbenv install 2.5.1
   - rbenv global 2.5.1
   - ruby -v
@@ -30,11 +30,11 @@ stages:
 unit-test-player:
   stage: test
   script:
-  - yarn test
+    - yarn test
 build-player:
   stage: build
   script:
-  - yarn build
+    - yarn build
   artifacts:
     paths:
       - build/
@@ -42,13 +42,12 @@ build-player:
 test-player:
   stage: coverage
   script:
-  # update this to `yarn coverage` later
-  - yarn test
-
+    # update this to `yarn coverage` later
+    - yarn test
 
 deploy-heroku:
   stage: deploy
-  
+
   script:
-  # deploy to heroku
-  - dpl --provider=heroku --strategy=git --username=$HEROKU_USER --password=$HEROKU_PASSWORD  --app=$HEROKU_APP
+    # deploy to heroku
+    - dpl --provider=heroku --api-key=$HEROKU_API_KEY  --app=$HEROKU_APP
