@@ -29,7 +29,7 @@ import 'animate.css/animate.min.css';
 const progressSize = 80;
 const progressMargin = -progressSize / 2;
 const controlBarHeight = 30;
-const styles = theme => {
+const styles = (theme) => {
   const primaryContrastColor = theme.palette.getContrastText(theme.palette.primary.main);
   return {
     root: {
@@ -131,7 +131,8 @@ const styles = theme => {
       position: 'absolute',
       bottom: 35,
       height: 100,
-      left: -15,
+      left: 5,
+      width: 'auto',
       '&[role=slider]': {
         height: 70,
       },
@@ -180,6 +181,7 @@ class VideoPlayer extends React.Component {
     'src-720p': PropTypes.string,
     'src-1080p': PropTypes.string,
   };
+
   static defaultProps = {
     controls: true,
     src: '',
@@ -189,46 +191,253 @@ class VideoPlayer extends React.Component {
     'src-720p': '',
     'src-1080p': '',
   };
-  state = {
-    ready: false,
-    playing: false,
-    buffering: true,
-    ended: false,
-    playedSeconds: 0,
-    progress: 0,
-    fullscreen: false,
-    settingsOpening: false,
-    hiddenControlBar: false,
-    muted: false,
-    volume: 50,
-    volumeControlOpening: false,
-    currentSrc: this.props.src,
-  };
-  player;
+
+  constructor(props) {
+    super(props);
+    this.state = {
+      ready: false,
+      playing: false,
+      buffering: true,
+      ended: false,
+      playedSeconds: 0,
+      progress: 0,
+      fullscreen: false,
+      settingsOpening: false,
+      hiddenControlBar: false,
+      muted: false,
+      volume: 50,
+      volumeControlOpening: false,
+      currentSrc: props.src,
+    };
+  }
+
   settingButton;
+
   togglePlaying = () => {
-    if (!this.state.ready) {
+    const { ready, playing, ended } = this.state;
+    if (!ready) {
       return;
     }
-    this.setState({ playing: !this.state.playing, ended: false });
-    if (this.state.ended) {
+    this.setState({ playing: !playing, ended: false });
+    if (ended) {
       this.player.seekTo(0);
     }
   };
+
+  onMouseMove = () => {
+    const { ready, hiddenControlBar } = this.state;
+    if (!ready) {
+      return;
+    }
+    if (hiddenControlBar) {
+      this.setState({ hiddenControlBar: false });
+    }
+  };
+
+  onPlayerKeyDown = (e) => {
+    const { playedSeconds, progress, ready } = this.state;
+    if (!ready) {
+      return;
+    }
+    let sectPerStep = 5;
+    let next5s = true;
+    let prev5s = false;
+    if (e.key === 'ArrowLeft') {
+      sectPerStep = -5;
+      next5s = false;
+      prev5s = true;
+    }
+    const percentPerSec = progress / playedSeconds;
+    const nextProgress = Math.min(100, Math.max(0, progress + percentPerSec * sectPerStep));
+    this.player.seekTo(nextProgress / 100);
+    this.setState({
+      next5s,
+      prev5s,
+    });
+    setTimeout(() => {
+      this.setState({
+        next5s: false,
+        prev5s: false,
+      });
+    }, 1000);
+  };
+
+  onVolumeControlToggle = () => {
+    const { volumeControlOpening } = this.state;
+    this.setState({
+      volumeControlOpening: !volumeControlOpening,
+    });
+  }
+
+  onVolumeMuteToggle = () => {
+    const { muted } = this.state;
+    this.setState({ muted: !muted });
+  }
+
+  player;
+
+  renderPlayPauseButton = () => {
+    const { classes } = this.props;
+    const {
+      buffering, ended, playing, ready,
+    } = this.state;
+    if (!buffering) {
+      let iconButtonClass;
+      if (!ended) {
+        iconButtonClass = !playing ? '' : ' animated fadeOut delay-0.5s';
+      } else {
+        iconButtonClass = ' ended';
+      }
+      let icon;
+      if (!playing) {
+        icon = (
+          <PlayCircleFilled
+            classes={{
+              colorPrimary: classes.controlBarButtonPrimaryColor,
+            }}
+            color="primary"
+            fontSize="inherit"
+          />
+        );
+      } else {
+        icon = !ended ? (
+          <PauseCircleFilled
+            classes={{
+              colorPrimary: classes.controlBarButtonPrimaryColor,
+            }}
+            color="primary"
+            fontSize="inherit"
+          />
+        ) : (
+          <Replay
+            classes={{
+              colorPrimary: classes.controlBarButtonPrimaryColor,
+            }}
+            color="primary"
+            fontSize="inherit"
+          />
+        );
+      }
+      return (
+        <IconButton className={classes.playPauseButton.concat(iconButtonClass)} disabled={!ready}>
+          {icon}
+        </IconButton>
+      );
+    }
+    return <CircularProgress className={classes.progress} thickness={5} size={progressSize} />;
+  };
+
+  renderVolumeController = () => {
+    const { classes } = this.props;
+    const {
+      ready, muted, volume, volumeControlOpening,
+    } = this.state;
+    let icon;
+    if (!muted) {
+      if (volume > 69) {
+        icon = (
+          <VolumeUp
+            classes={{
+              colorPrimary: classes.controlBarButtonPrimaryColor,
+            }}
+            color="primary"
+          />
+        );
+      } else {
+        icon = volume > 0 ? (
+          <VolumeDown
+            classes={{
+              colorPrimary: classes.controlBarButtonPrimaryColor,
+            }}
+            color="primary"
+          />
+        ) : (
+          <VolumeMute
+            classes={{
+              colorPrimary: classes.controlBarButtonPrimaryColor,
+            }}
+            color="primary"
+          />
+        );
+      }
+    } else {
+      icon = (
+        <VolumeOff
+          classes={{
+            colorPrimary: classes.controlBarButtonPrimaryColor,
+          }}
+          color="primary"
+        />
+      );
+    }
+    return (
+      <span className={classes.volumeControlWrapper}>
+        <IconButton
+          className={classes.controlBarButton.concat(' ', classes.volumeControlButton)}
+          disabled={!ready}
+          onClick={this.onVolumeControlToggle}
+          onDoubleClick={this.onVolumeMuteToggle}
+        >
+          {icon}
+        </IconButton>
+        {!volumeControlOpening ? null : (
+          <ClickAwayListener
+            onClickAway={() => {
+              this.setState({
+                volumeControlOpening: false,
+              });
+            }}
+          >
+            <Slider
+              className={classes.volumeControl}
+              classes={{
+                thumb: classes.volumeControlThumb,
+                trackBefore: classes.volumeControlTrackBefore,
+                trackAfter: classes.volumeControlTrackAfter,
+              }}
+              value={volume}
+              disabled={!ready}
+              vertical
+              reverse
+              onChange={(e, vol) => {
+                if (!ready) {
+                  return;
+                }
+                this.setState({
+                  volume: vol,
+                });
+              }}
+              onWheel={(e) => {
+                const speed = Math.abs(e.deltaY / 100);
+                let length = 10;
+                if (e.deltaY > 0) {
+                  // down
+                  length = -10;
+                }
+                const totalLength = length * speed;
+                this.setState({
+                  volume: Math.max(0, Math.min(100, volume + totalLength)),
+                });
+              }}
+            />
+          </ClickAwayListener>
+        )}
+      </span>
+    );
+  }
+
   render() {
-    const { classes, src, style, controls, className, ...res } = this.props;
+    const {
+      classes, src, style, controls, className, ...res
+    } = this.props;
     const {
       playing,
-      buffering,
-      ended,
-      playedSeconds,
       progress,
       fullscreen,
       hiddenControlBar,
       ready,
       muted,
       volume,
-      volumeControlOpening,
       settingsOpening,
       next5s,
       prev5s,
@@ -240,7 +449,7 @@ class VideoPlayer extends React.Component {
         source: currentSrc,
       },
     ];
-    Object.keys(res).forEach(key => {
+    Object.keys(res).forEach((key) => {
       // src-240p,
       // src-360p,
       // src-480p,
@@ -260,7 +469,6 @@ class VideoPlayer extends React.Component {
     supportedQualities = supportedQualities.sort(
       ({ resolution }, { resolution: nextResolution }) => resolution > nextResolution,
     );
-
     return (
       <div
         className={classes.root.concat(' ', className || '')}
@@ -268,54 +476,26 @@ class VideoPlayer extends React.Component {
           !fullscreen
             ? style
             : {
-                ...style,
-                width: '100vw',
-                height: '100vh',
-              }
+              ...style,
+              width: '100vw',
+              height: '100vh',
+            }
         }
         {...res}
       >
         <div className={classes.wrapper}>
           <div
+            role="button"
             className={classes.playerWrapper}
             tabIndex={0}
             onClick={this.togglePlaying}
-            onMouseMove={() => {
-              if (hiddenControlBar) {
-                this.setState({ hiddenControlBar: false });
-              }
-            }}
-            onKeyDown={e => {
-              let sectPerStep = 5;
-              let next5s = true;
-              let prev5s = false;
-              if (e.key === 'ArrowLeft') {
-                sectPerStep = -5;
-                next5s = false;
-                prev5s = true;
-              }
-              const percentPerSec = progress / playedSeconds;
-              const nextProgress = Math.min(
-                100,
-                Math.max(0, progress + percentPerSec * sectPerStep),
-              );
-              this.player.seekTo(nextProgress / 100);
-              this.setState({
-                next5s,
-                prev5s,
-              });
-              setTimeout(() => {
-                this.setState({
-                  next5s: false,
-                  prev5s: false,
-                });
-              }, 1000);
-            }}
+            onMouseMove={this.onMouseMove}
+            onKeyDown={this.onPlayerKeyDown}
           >
             <ReactPlayer
               url={currentSrc}
-              width={'100%'}
-              height={'100%'}
+              width="100%"
+              height="100%"
               playing={playing}
               volume={volume / 100}
               muted={muted}
@@ -328,7 +508,7 @@ class VideoPlayer extends React.Component {
                   buffering: false,
                 });
               }}
-              onReady={ref => {
+              onReady={(ref) => {
                 this.player = ref;
                 this.player.wrapper.querySelector('iframe').style.visibility = 'visible';
                 this.setState({
@@ -348,48 +528,13 @@ class VideoPlayer extends React.Component {
                   ended: true,
                 });
               }}
-              onError={err => {
+              onError={(err) => {
                 console.error(err);
               }}
               progressInterval={100}
             />
           </div>
-          {!buffering ? (
-            <IconButton
-              className={classes.playPauseButton.concat(
-                !ended ? (!playing ? '' : ' animated fadeOut delay-0.5s') : ' ended',
-              )}
-              disabled={!ready}
-            >
-              {!playing ? (
-                <PlayCircleFilled
-                  classes={{
-                    colorPrimary: classes.controlBarButtonPrimaryColor,
-                  }}
-                  color="primary"
-                  fontSize="inherit"
-                />
-              ) : !ended ? (
-                <PauseCircleFilled
-                  classes={{
-                    colorPrimary: classes.controlBarButtonPrimaryColor,
-                  }}
-                  color="primary"
-                  fontSize="inherit"
-                />
-              ) : (
-                <Replay
-                  classes={{
-                    colorPrimary: classes.controlBarButtonPrimaryColor,
-                  }}
-                  color="primary"
-                  fontSize="inherit"
-                />
-              )}
-            </IconButton>
-          ) : (
-            <CircularProgress className={classes.progress} thickness={5} size={progressSize} />
-          )}
+          {this.renderPlayPauseButton()}
           {!prev5s ? null : (
             <Replay5
               classes={{
@@ -439,94 +584,7 @@ class VideoPlayer extends React.Component {
                     />
                   )}
                 </IconButton>
-                <span className={classes.volumeControlWrapper}>
-                  <IconButton
-                    className={classes.controlBarButton.concat(' ', classes.volumeControlButton)}
-                    disabled={!ready}
-                    onClick={() => {
-                      this.setState({
-                        volumeControlOpening: !volumeControlOpening,
-                      });
-                    }}
-                    onDoubleClick={() => {
-                      this.setState({ muted: !muted });
-                    }}
-                  >
-                    {!muted ? (
-                      volume > 69 ? (
-                        <VolumeUp
-                          classes={{
-                            colorPrimary: classes.controlBarButtonPrimaryColor,
-                          }}
-                          color="primary"
-                        />
-                      ) : volume > 0 ? (
-                        <VolumeDown
-                          classes={{
-                            colorPrimary: classes.controlBarButtonPrimaryColor,
-                          }}
-                          color="primary"
-                        />
-                      ) : (
-                        <VolumeMute
-                          classes={{
-                            colorPrimary: classes.controlBarButtonPrimaryColor,
-                          }}
-                          color="primary"
-                        />
-                      )
-                    ) : (
-                      <VolumeOff
-                        classes={{
-                          colorPrimary: classes.controlBarButtonPrimaryColor,
-                        }}
-                        color="primary"
-                      />
-                    )}
-                  </IconButton>
-                  {!volumeControlOpening ? null : (
-                    <ClickAwayListener
-                      onClickAway={() => {
-                        this.setState({
-                          volumeControlOpening: false,
-                        });
-                      }}
-                    >
-                      <Slider
-                        className={classes.volumeControl}
-                        classes={{
-                          thumb: classes.volumeControlThumb,
-                          trackBefore: classes.volumeControlTrackBefore,
-                          trackAfter: classes.volumeControlTrackAfter,
-                        }}
-                        value={volume}
-                        disabled={!ready}
-                        vertical={true}
-                        reverse={true}
-                        onChange={(e, vol) => {
-                          if (!ready) {
-                            return;
-                          }
-                          this.setState({
-                            volume: vol,
-                          });
-                        }}
-                        onWheel={e => {
-                          const speed = Math.abs(e.deltaY / 100);
-                          let length = 10;
-                          if (e.deltaY > 0) {
-                            // down
-                            length = -10;
-                          }
-                          const totalLength = length * speed;
-                          this.setState({
-                            volume: Math.max(0, Math.min(100, volume + totalLength)),
-                          });
-                        }}
-                      />
-                    </ClickAwayListener>
-                  )}
-                </span>
+                {this.renderVolumeController()}
                 <Slider
                   className={classes.bufferProgress}
                   classes={{
@@ -554,7 +612,7 @@ class VideoPlayer extends React.Component {
                       settingsOpening: !settingsOpening,
                     });
                   }}
-                  ref={ref => {
+                  ref={(ref) => {
                     if (!ref) {
                       return;
                     }

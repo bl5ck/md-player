@@ -29,11 +29,11 @@ const jss = create(jssPreset());
 const generateClassName = createGenerateClassName();
 
 function withRoot(Component) {
-  return props => (
+  return ({ theme, ...props }) => (
     <JssProvider jss={jss} generateClassName={generateClassName}>
       {/* MuiThemeProvider makes the theme available down the React tree
           thanks to React context. */}
-      <MuiThemeProvider theme={props.theme || defaultTheme}>
+      <MuiThemeProvider theme={theme || defaultTheme}>
         {/* CssBaseline kickstart an elegant, consistent, and simple baseline to build upon. */}
         <CssBaseline />
         <Component {...props} />
