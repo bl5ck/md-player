@@ -16,6 +16,7 @@ unit-test-player:
   script:
     - yarn
     - yarn test
+  dependencies: []
 build-player:
   stage: build
   script:
@@ -24,6 +25,7 @@ build-player:
   artifacts:
     paths:
       - build/
+  dependencies: []
 
 test-player:
   stage: coverage
@@ -31,21 +33,23 @@ test-player:
     - yarn
     # update this to `yarn coverage` later
     - yarn test
+  dependencies:
+    - build-player
 
 deploy-heroku:
   stage: deploy
   script:
-    # install ruby on rails
-    - apt-get install -y libgdbm-dev libncurses5-dev automake libtool bison libffi-dev
-    - gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
-    - curl -sSL https://get.rvm.io | bash -s stable
-    - source ~/.rvm/scripts/rvm
-    - rvm install 2.5.1
-    - rvm use 2.5.1 --default
-    - ruby -v
-    # install bundler
-    - gem install bundler
-    # install dpl
-    - gem install dpl
+    - yarn global add heroku
+    - heroku --version
+    - HEROKU_API_KEY=${HEROKU_API_KEY}
+    - eroku login
+    # navigate to artifact folder
+    - cd build
     # deploy to heroku
-    - dpl --provider=heroku --api-key=$HEROKU_API_KEY --app=$HEROKU_APP
+    - git init
+    - heroku git:remote -a ${HEROKU_APP}
+    - git add .
+    - git commit -am "${CI_COMMIT_MESSAGE}"
+    - git push heroku master
+  dependencies:
+    - build-player
