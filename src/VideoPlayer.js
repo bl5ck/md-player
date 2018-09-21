@@ -29,7 +29,7 @@ import 'animate.css/animate.min.css';
 const progressSize = 80;
 const progressMargin = -progressSize / 2;
 const controlBarHeight = 30;
-const styles = (theme) => {
+const styles = theme => {
   const primaryContrastColor = theme.palette.getContrastText(theme.palette.primary.main);
   return {
     root: {
@@ -234,7 +234,7 @@ class VideoPlayer extends React.Component {
     }
   };
 
-  onPlayerKeyDown = (e) => {
+  onPlayerKeyDown = e => {
     const { playedSeconds, progress, ready } = this.state;
     if (!ready) {
       return;
@@ -407,7 +407,7 @@ class VideoPlayer extends React.Component {
                   volume: vol,
                 });
               }}
-              onWheel={(e) => {
+              onWheel={e => {
                 const speed = Math.abs(e.deltaY / 100);
                 let length = 10;
                 if (e.deltaY > 0) {
@@ -449,7 +449,7 @@ class VideoPlayer extends React.Component {
         source: currentSrc,
       },
     ];
-    Object.keys(res).forEach((key) => {
+    Object.keys(res).forEach(key => {
       // src-240p,
       // src-360p,
       // src-480p,
@@ -508,7 +508,7 @@ class VideoPlayer extends React.Component {
                   buffering: false,
                 });
               }}
-              onReady={(ref) => {
+              onReady={ref => {
                 this.player = ref;
                 this.player.wrapper.querySelector('iframe').style.visibility = 'visible';
                 this.setState({
@@ -528,7 +528,7 @@ class VideoPlayer extends React.Component {
                   ended: true,
                 });
               }}
-              onError={(err) => {
+              onError={err => {
                 console.error(err);
               }}
               progressInterval={100}
@@ -612,7 +612,7 @@ class VideoPlayer extends React.Component {
                       settingsOpening: !settingsOpening,
                     });
                   }}
-                  ref={(ref) => {
+                  ref={ref => {
                     if (!ref) {
                       return;
                     }

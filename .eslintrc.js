@@ -19,5 +19,7 @@ module.exports = {
     'react/jsx-filename-extension': 'off',
     'linebreak-style': 'off',
     'react/no-find-dom-node': 'off',
+    'arrow-parens': ['error', 'as-needed'],
+    'no-console': ['warn', { allow: ['warn', 'error'] }],
   },
 };
