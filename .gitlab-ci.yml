@@ -32,7 +32,6 @@ test-player:
 
 deploy-heroku:
   stage: deploy
-
   script:
     # install ruby on rails
     - apt-get update
@@ -46,11 +45,10 @@ deploy-heroku:
     - git clone https://github.com/rbenv/ruby-build.git ~/.rbenv/plugins/ruby-build
     - echo 'export PATH="$HOME/.rbenv/plugins/ruby-build/bin:$PATH"' >> ~/.bashrc
     - exec $SHELL
-
     - rbenv install 2.5.1
     - rbenv global 2.5.1
     - ruby -v
     # install dpl
     - gem install dpl
     # deploy to heroku
-    - dpl --provider=heroku --api-key=$HEROKU_API_KEY  --app=$HEROKU_APP
+    - dpl --provider=heroku --api-key=$HEROKU_API_KEY --app=$HEROKU_APP
