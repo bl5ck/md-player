@@ -3,6 +3,7 @@ cache:
   key: ${CI_PROJECT_NAME}
   paths:
     - node_modules/
+    - yarn.lock
 before_script:
   - node -v
   - yarn -v
@@ -19,6 +20,7 @@ unit-test-player:
 build-player:
   stage: build
   script:
+    - yarn
     - yarn build
   artifacts:
     paths:
@@ -27,6 +29,7 @@ build-player:
 test-player:
   stage: coverage
   script:
+    - yarn
     # update this to `yarn coverage` later
     - yarn test
 
