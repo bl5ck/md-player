@@ -1,0 +1,54 @@
+image: node:8.2.0
+cache:
+  key: $CI_PROJECT_NAME
+  paths:
+  - vendor/ruby
+before_script:
+  # install ruby on rails
+  - apt-get update
+  - apt-get install git-core curl zlib1g-dev build-essential libssl-dev libreadline-dev libyaml-dev libsqlite3-dev sqlite3 libxml2-dev libxslt1-dev libcurl4-openssl-dev software-properties-common libffi-dev
+  # install rbenv
+  - git clone https://github.com/rbenv/rbenv.git ~/.rbenv
+  - echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bashrc
+  - echo 'eval "$(rbenv init -)"' >> ~/.bashrc
+  - exec $SHELL
+  # install ruby
+  - git clone https://github.com/rbenv/ruby-build.git ~/.rbenv/plugins/ruby-build
+  - echo 'export PATH="$HOME/.rbenv/plugins/ruby-build/bin:$PATH"' >> ~/.bashrc
+  - exec $SHELL
+    
+  - rbenv install 2.5.1
+  - rbenv global 2.5.1
+  - ruby -v
+  # install dpl
+  - gem install dpl
+stages:
+  - test
+  - build
+  - coverage
+  - deploy
+unit-test-player:
+  stage: unit-test
+  script:
+  - yarn test
+build-player:
+  stage: build
+  script:
+  - yarn build
+  artifacts:
+    paths:
+      - build/
+
+test-player:
+  stage: coverage
+  script:
+  # update this to `yarn coverage` later
+  - yarn test
+
+
+deploy-heroku:
+  stage: deploy
+  
+  script:
+  # deploy to heroku
+  - dpl --provider=heroku --strategy=git --username=$HEROKU_USER --password=$HEROKU_PASSWORD  --app=$HEROKU_APP
