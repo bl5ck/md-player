@@ -42,7 +42,7 @@ deploy-heroku:
     - yarn global add heroku
     - heroku --version
     - HEROKU_API_KEY=${HEROKU_API_KEY}
-    - eroku login
+    - heroku login
     # navigate to artifact folder
     - cd build
     # deploy to heroku
