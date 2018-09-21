@@ -541,7 +541,7 @@ class VideoPlayer extends React.Component {
                 colorPrimary: classes.controlBarButtonPrimaryColor,
               }}
               color="primary"
-              className={classes.prev5s.concat(' animated fadeOut delay-0.5s')}
+              className={classes.prev5s.concat(' animated fadeOut delay-1s')}
             />
           )}
           {!next5s ? null : (
@@ -550,7 +550,7 @@ class VideoPlayer extends React.Component {
                 colorPrimary: classes.controlBarButtonPrimaryColor,
               }}
               color="primary"
-              className={classes.next5s.concat(' animated fadeOut delay-0.5s')}
+              className={classes.next5s.concat(' animated fadeOut delay-1s')}
             />
           )}
           {!controls ? null : (

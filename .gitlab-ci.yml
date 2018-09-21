@@ -6,6 +6,7 @@ cache:
 before_script:
   - node -v
   - yarn -v
+  - yarn
 stages:
   - test
   - build
