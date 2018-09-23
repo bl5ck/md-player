@@ -47,6 +47,8 @@ deploy-heroku:
     # deploy to heroku
     - git init
     - heroku git:remote -a ${HEROKU_APP}
+    - git config --global user.email "gitlabsci@gmail.com"
+    - git config --global user.name "Gitlab CI"
     - git add .
     - git commit -am "${CI_COMMIT_MESSAGE}"
     - git push heroku master
