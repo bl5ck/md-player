@@ -45,7 +45,6 @@ deploy-heroku:
     - wget -O- https://toolbelt.heroku.com/apt/release.key | apt-key add -
     - apt-get update
     - apt-get install -y heroku-toolbelt
-    - export HEROKU_API_KEY=$HEROKU_API_KEY
     # - heroku login
     # navigate to artifact folder
     - cd build
@@ -53,8 +52,10 @@ deploy-heroku:
     - 'echo "{\"root\": \"./\"}" > static.json'
     - heroku buildpacks:set https://github.com/heroku/heroku-buildpack-static.git
     - git init
-    - heroku git:remote -a md-player
+    - heroku git:remote -a $HEROKU_APP
     - git commit -am "$CI_COMMIT_MESSAGE"
     - git push heroku master
+  only:
+    - master
   dependencies:
     - build-player
