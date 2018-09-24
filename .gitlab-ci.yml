@@ -39,18 +39,21 @@ test-player:
 deploy-heroku:
   stage: deploy
   script:
-    - yarn global add heroku
-    - heroku --version
+    # - yarn global add heroku
+    # - heroku --version
+    - echo "deb http://toolbelt.heroku.com/ubuntu ./" > /etc/apt/sources.list.d/heroku.list
+    - wget -O- https://toolbelt.heroku.com/apt/release.key | apt-key add -
+    - apt-get update
+    - apt-get install -y heroku-toolbelt
+    - export HEROKU_API_KEY=${HEROKU_API_KEY}
+    # - heroku login
     # navigate to artifact folder
     - cd build
     # deploy to heroku
     - 'echo "{\"root\": \"./\"}" > static.json'
     - heroku buildpacks:set https://github.com/heroku/heroku-buildpack-static.git
     - git init
-    - git remote add heroku https://heroku:${HEROKU_API_KEY}@git.heroku.com/${HEROKU_APP}.git
-    - git config --global user.email "gitlabsci@gmail.com"
-    - git config --global user.name "Gitlab CI"
-    - git add .
+    - heroku git:remote -a md-player
     - git commit -am "${CI_COMMIT_MESSAGE}"
     - git push heroku master
   dependencies:
