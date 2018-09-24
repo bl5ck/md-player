@@ -9,6 +9,14 @@ const el = document.querySelector('[data-player="md-player"]');
 const {
   src, srcDefault, themePrimary, themeSecondary, ...props
 } = el.dataset;
+// normalize all src keys
+const playerProps = Object.keys(props).reduce(
+  (obj, key) => ({
+    ...obj,
+    [!/^src-\d{3,}p$/.test(key) ? key : key.replace('-', '')]: props[key],
+  }),
+  {},
+);
 if (!src && !srcDefault) {
   throw new Error('You must set "data-src" attribute for the player');
 }
@@ -18,9 +26,9 @@ if (themePrimary && themeSecondary) {
     require(`@material-ui/core/colors/${themeSecondary}`),
   ]).then(([{ default: primary }, { default: secondary }]) => {
     const muiTheme = createMuiTheme({ palette: { primary, secondary } });
-    ReactDOM.render(<App src={src || srcDefault} theme={muiTheme} {...props} />, el);
+    ReactDOM.render(<App src={src || srcDefault} theme={muiTheme} {...playerProps} />, el);
   });
 } else {
-  ReactDOM.render(<App src={src || srcDefault} {...props} />, el);
+  ReactDOM.render(<App src={src || srcDefault} {...playerProps} />, el);
 }
 registerServiceWorker();

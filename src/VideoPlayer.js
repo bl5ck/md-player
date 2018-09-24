@@ -450,15 +450,15 @@ class VideoPlayer extends React.Component {
       },
     ];
     Object.keys(res).forEach(key => {
-      // src-240p,
-      // src-360p,
-      // src-480p,
-      // src-720p,
-      // src-1080p,
-      if (!res[key] || !/^src-\d{3,}p$/.test(key)) {
+      // src240p,
+      // src360p,
+      // src480p,
+      // src720p,
+      // src1080p,
+      if (!res[key] || !/^src\d{3,}p$/.test(key)) {
         return;
       }
-      const resolution = key.replace('src-', '');
+      const resolution = key.replace('src', '');
       const source = res[key];
       supportedQualities.push({
         resolution,
