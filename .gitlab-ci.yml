@@ -1,6 +1,6 @@
 image: node:8.12.0
 cache:
-  key: ${CI_PROJECT_NAME}
+  key: $CI_PROJECT_NAME
   paths:
     - node_modules/
 before_script:
@@ -45,7 +45,7 @@ deploy-heroku:
     - wget -O- https://toolbelt.heroku.com/apt/release.key | apt-key add -
     - apt-get update
     - apt-get install -y heroku-toolbelt
-    - export HEROKU_API_KEY=${HEROKU_API_KEY}
+    - export HEROKU_API_KEY=$HEROKU_API_KEY
     # - heroku login
     # navigate to artifact folder
     - cd build
@@ -54,7 +54,7 @@ deploy-heroku:
     - heroku buildpacks:set https://github.com/heroku/heroku-buildpack-static.git
     - git init
     - heroku git:remote -a md-player
-    - git commit -am "${CI_COMMIT_MESSAGE}"
+    - git commit -am "$CI_COMMIT_MESSAGE"
     - git push heroku master
   dependencies:
     - build-player
