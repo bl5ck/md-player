@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { createMuiTheme } from '@material-ui/core/styles';
+import JSON5 from 'json5';
 import './index.css';
 import App from './App';
 import registerServiceWorker from './registerServiceWorker';
@@ -13,17 +14,10 @@ const {
   themeSecondary,
   screenlist,
   screenlistInterval,
+  series,
   ...props
 } = el.dataset;
 // normalize all src keys
-let videoScreenlist = [];
-let videoScreenlistInterval = 0;
-if (screenlist) {
-  videoScreenlist = JSON.parse(screenlist.replace(/'/g, '"'));
-  if (screenlistInterval) {
-    videoScreenlistInterval = parseFloat(screenlistInterval);
-  }
-}
 const playerProps = Object.keys(props).reduce(
   (obj, key) => ({
     ...obj,
@@ -34,6 +28,20 @@ const playerProps = Object.keys(props).reduce(
 if (!src && !srcDefault) {
   throw new Error('You must set "data-src" attribute for the player');
 }
+let videoScreenlist = [];
+let videoScreenlistInterval = 0;
+if (screenlist) {
+  videoScreenlist = JSON5.parse(screenlist);
+  if (screenlistInterval) {
+    videoScreenlistInterval = parseFloat(screenlistInterval);
+  }
+}
+
+let videoSeries = [];
+if (series) {
+  videoSeries = JSON5.parse(series);
+}
+
 if (themePrimary && themeSecondary) {
   Promise.all([
     require(`@material-ui/core/colors/${themePrimary}`),
@@ -46,6 +54,7 @@ if (themePrimary && themeSecondary) {
         theme={muiTheme}
         screenlist={videoScreenlist}
         screenlistInterval={videoScreenlistInterval}
+        series={videoSeries}
         {...playerProps}
       />,
       el,
@@ -57,6 +66,7 @@ if (themePrimary && themeSecondary) {
       src={src || srcDefault}
       screenlist={videoScreenlist}
       screenlistInterval={videoScreenlistInterval}
+      series={videoSeries}
       {...playerProps}
     />,
     el,

@@ -1,9 +1,11 @@
 import React from 'react';
 import { findDOMNode } from 'react-dom';
+import PropTypes from 'prop-types';
 import ReactPlayer from 'react-player';
 import screenfull from 'screenfull';
 import ClickAwayListener from '@material-ui/core/ClickAwayListener';
 import { withStyles } from '@material-ui/core/styles';
+// Material components
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Slider from '@material-ui/lab/Slider';
 import AppBar from '@material-ui/core/AppBar';
@@ -11,6 +13,10 @@ import Toolbar from '@material-ui/core/Toolbar';
 import IconButton from '@material-ui/core/IconButton';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
+import GridList from '@material-ui/core/GridList';
+import GridListTile from '@material-ui/core/GridListTile';
+import GridListTileBar from '@material-ui/core/GridListTileBar';
+// Icons
 import PauseCircleFilled from '@material-ui/icons/PauseCircleFilled';
 import PlayCircleFilled from '@material-ui/icons/PlayCircleFilled';
 import Replay from '@material-ui/icons/Replay';
@@ -23,7 +29,7 @@ import VolumeMute from '@material-ui/icons/VolumeMute';
 import Settings from '@material-ui/icons/Settings';
 import Replay5 from '@material-ui/icons/Replay5';
 import Forward5 from '@material-ui/icons/Forward5';
-import PropTypes from 'prop-types';
+import Info from '@material-ui/icons/Info';
 import 'animate.css/animate.min.css';
 
 const progressSize = 80;
@@ -33,6 +39,16 @@ const styles = theme => {
   const primaryContrastColor = theme.palette.getContrastText(theme.palette.primary.main);
   const screenlistBorderColor = 'rgba(0,0,0,.5)';
   const screenlistBorderWidth = 10;
+  const gradianFadeCover = {
+    content: '""',
+    display: 'block',
+    position: 'absolute',
+    left: 0,
+    width: '100%',
+    height: '15%',
+    pointerEvents: 'none',
+    zIndex: 1,
+  };
   return {
     root: {
       width: '100%',
@@ -112,10 +128,12 @@ const styles = theme => {
     prev5s: {
       left: 20,
       extend: 'prevNext5s',
+      zIndex: 3,
     },
     next5s: {
       right: 20,
       extend: 'prevNext5s',
+      zIndex: 3,
     },
     volumeControlButton: {
       marginLeft: -5,
@@ -200,6 +218,35 @@ const styles = theme => {
       paddingTop: 5,
       paddingBottom: 5,
     },
+    series: {
+      width: 320,
+      height: '100%',
+      position: 'absolute',
+      display: 'flex',
+      flexWrap: 'wrap',
+      justifyContent: 'space-around',
+      overflow: 'hidden',
+      backgroundColor: 'rgba(0,0,0,0.8)',
+      paddingLeft: 10,
+      paddingBottom: controlBarHeight,
+      right: 0,
+      top: 0,
+      zIndex: 1,
+      userSelect: 'none',
+      '&::before': {
+        extend: gradianFadeCover,
+        top: 0,
+        background: 'linear-gradient(to bottom, rgba(0,0,0,0.7) 0%,rgba(255,255,255,0) 100%)',
+      },
+      '&::after': {
+        extend: gradianFadeCover,
+        bottom: 0,
+        background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%,rgba(255,255,255,0) 100%)',
+      },
+      '& img': {
+        pointerEvents: 'none',
+      },
+    },
   };
 };
 
@@ -214,6 +261,19 @@ class VideoPlayer extends React.Component {
     'src-1080p': PropTypes.string,
     screenlist: PropTypes.arrayOf(PropTypes.string),
     screenlistInterval: PropTypes.number,
+    series: PropTypes.arrayOf(
+      PropTypes.shape({
+        title: PropTypes.string,
+        ItemComponent: PropTypes.func,
+        src: PropTypes.string,
+        'src-240p': PropTypes.string,
+        'src-360p': PropTypes.string,
+        'src-480p': PropTypes.string,
+        'src-720p': PropTypes.string,
+        'src-1080p': PropTypes.string,
+        screenlist: PropTypes.arrayOf(PropTypes.string),
+      }),
+    ),
   };
 
   static defaultProps = {
@@ -226,6 +286,7 @@ class VideoPlayer extends React.Component {
     'src-1080p': '',
     screenlist: [],
     screenlistInterval: 0,
+    series: [],
   };
 
   constructor(props) {
@@ -625,6 +686,7 @@ class VideoPlayer extends React.Component {
           classes={{
             colorPrimary: classes.controlBarButtonPrimaryColor,
           }}
+          key="video-previous-5s"
           color="primary"
           className={classes.prev5s.concat(' animated fadeOut delay-0.5s')}
         />
@@ -634,6 +696,7 @@ class VideoPlayer extends React.Component {
           classes={{
             colorPrimary: classes.controlBarButtonPrimaryColor,
           }}
+          key="video-next-5s"
           color="primary"
           className={classes.next5s.concat(' animated fadeOut delay-0.5s')}
         />
@@ -780,6 +843,43 @@ class VideoPlayer extends React.Component {
     );
   };
 
+  renderSeries = () => {
+    const { classes, series } = this.props;
+    const { ready } = this.state;
+    return !ready || !series.length ? null : (
+      <div className={classes.series}>
+        <GridList cellHeight={140} className={classes.gridList}>
+          {series.map(video => (
+            <GridListTile className={classes.seriesItem} key={video.thumbnail} cols={2} role="button">
+              <img
+                src={video.thumbnail || (video.screenlist && video.screenlist[0])}
+                alt={video.title}
+              />
+              <GridListTileBar
+                title={video.title}
+                subtitle={(
+                  <span
+                    dangerouslySetInnerHTML={!video.subtitle ? null : { __html: video.subtitle }}
+                  />
+                )}
+                actionIcon={(
+                  <IconButton className={classes.icon}>
+                    <Info
+                      classes={{
+                        colorPrimary: classes.controlBarButtonPrimaryColor,
+                      }}
+                      color="primary"
+                    />
+                  </IconButton>
+                )}
+              />
+            </GridListTile>
+          ))}
+        </GridList>
+      </div>
+    );
+  };
+
   root;
 
   render() {
@@ -820,6 +920,7 @@ class VideoPlayer extends React.Component {
           {this.renderPlayPauseButton()}
           {this.renderPreviousNext5s()}
           {this.renderControls()}
+          {this.renderSeries()}
         </div>
       </div>
     );
