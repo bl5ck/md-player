@@ -267,12 +267,12 @@ class VideoPlayer extends React.Component {
     this.setState({
       volumeControlOpening: !volumeControlOpening,
     });
-  }
+  };
 
   onVolumeMuteToggle = () => {
     const { muted } = this.state;
     this.setState({ muted: !muted });
-  }
+  };
 
   player;
 
@@ -424,7 +424,9 @@ class VideoPlayer extends React.Component {
         )}
       </span>
     );
-  }
+  };
+
+  root;
 
   render() {
     const {
@@ -472,6 +474,12 @@ class VideoPlayer extends React.Component {
     return (
       <div
         className={classes.root.concat(' ', className || '')}
+        ref={ref => {
+          if (!ref) {
+            return;
+          }
+          this.root = ref;
+        }}
         style={
           !fullscreen
             ? style
@@ -634,6 +642,7 @@ class VideoPlayer extends React.Component {
                     open={settingsOpening}
                     onClose={this.handleClose}
                     classes={{ paper: classes.settingPaper }}
+                    container={this.root}
                   >
                     {supportedQualities.map(({ source, resolution }) => (
                       <MenuItem
