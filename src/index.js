@@ -7,9 +7,23 @@ import registerServiceWorker from './registerServiceWorker';
 
 const el = document.querySelector('[data-player="md-player"]');
 const {
-  src, srcDefault, themePrimary, themeSecondary, ...props
+  src,
+  srcDefault,
+  themePrimary,
+  themeSecondary,
+  screenlist,
+  screenlistInterval,
+  ...props
 } = el.dataset;
 // normalize all src keys
+let videoScreenlist = [];
+let videoScreenlistInterval = 0;
+if (screenlist) {
+  videoScreenlist = JSON.parse(screenlist.replace(/'/g, '"'));
+  if (screenlistInterval) {
+    videoScreenlistInterval = parseFloat(screenlistInterval);
+  }
+}
 const playerProps = Object.keys(props).reduce(
   (obj, key) => ({
     ...obj,
@@ -26,9 +40,26 @@ if (themePrimary && themeSecondary) {
     require(`@material-ui/core/colors/${themeSecondary}`),
   ]).then(([{ default: primary }, { default: secondary }]) => {
     const muiTheme = createMuiTheme({ palette: { primary, secondary } });
-    ReactDOM.render(<App src={src || srcDefault} theme={muiTheme} {...playerProps} />, el);
+    ReactDOM.render(
+      <App
+        src={src || srcDefault}
+        theme={muiTheme}
+        screenlist={videoScreenlist}
+        screenlistInterval={videoScreenlistInterval}
+        {...playerProps}
+      />,
+      el,
+    );
   });
 } else {
-  ReactDOM.render(<App src={src || srcDefault} {...playerProps} />, el);
+  ReactDOM.render(
+    <App
+      src={src || srcDefault}
+      screenlist={videoScreenlist}
+      screenlistInterval={videoScreenlistInterval}
+      {...playerProps}
+    />,
+    el,
+  );
 }
 registerServiceWorker();

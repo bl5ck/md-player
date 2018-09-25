@@ -31,6 +31,8 @@ const progressMargin = -progressSize / 2;
 const controlBarHeight = 30;
 const styles = theme => {
   const primaryContrastColor = theme.palette.getContrastText(theme.palette.primary.main);
+  const screenlistBorderColor = 'rgba(0,0,0,.5)';
+  const screenlistBorderWidth = 10;
   return {
     root: {
       width: '100%',
@@ -158,6 +160,36 @@ const styles = theme => {
     bufferProgressTrackAfter: {
       background: primaryContrastColor,
     },
+    screenlist: {
+      position: 'absolute',
+      top: '50%',
+      left: '50%',
+      width: 150,
+      height: 90.5,
+      transform: 'translate(-50%, calc(-100% - 20px))',
+      padding: 7,
+      background: screenlistBorderColor,
+      '&::before': {
+        content: '""',
+        display: 'block',
+        borderLeft: `${screenlistBorderWidth}px solid transparent`,
+        borderRight: `${screenlistBorderWidth}px solid transparent`,
+        borderTop: `10px solid ${screenlistBorderColor}`,
+        width: 0,
+        height: 0,
+        position: 'absolute',
+        left: `calc(50% - ${screenlistBorderWidth}px)`,
+        bottom: -screenlistBorderWidth,
+      },
+    },
+    screenlistImgWrapper: {
+      overflow: 'hidden',
+      width: '100%',
+      height: '100%',
+      '& > img': {
+        width: '100%',
+      },
+    },
     settingPaper: {
       backgroundColor: theme.palette.primary.dark,
       fontSize: '80%',
@@ -180,6 +212,8 @@ class VideoPlayer extends React.Component {
     'src-480p': PropTypes.string,
     'src-720p': PropTypes.string,
     'src-1080p': PropTypes.string,
+    screenlist: PropTypes.arrayOf(PropTypes.string),
+    screenlistInterval: PropTypes.number,
   };
 
   static defaultProps = {
@@ -190,6 +224,8 @@ class VideoPlayer extends React.Component {
     'src-480p': '',
     'src-720p': '',
     'src-1080p': '',
+    screenlist: [],
+    screenlistInterval: 0,
   };
 
   constructor(props) {
@@ -199,15 +235,17 @@ class VideoPlayer extends React.Component {
       playing: false,
       buffering: true,
       ended: false,
-      playedSeconds: 0,
+      // playedSeconds: 0,
       progress: 0,
       fullscreen: false,
       settingsOpening: false,
-      hiddenControlBar: false,
+      controlBarHidden: false,
       muted: false,
       volume: 50,
       volumeControlOpening: false,
       currentSrc: props.src,
+      currentScreenshot: props.screenlist[0] || '',
+      screenlistShowing: false,
     };
   }
 
@@ -225,17 +263,17 @@ class VideoPlayer extends React.Component {
   };
 
   onMouseMove = () => {
-    const { ready, hiddenControlBar } = this.state;
+    const { ready, controlBarHidden } = this.state;
     if (!ready) {
       return;
     }
-    if (hiddenControlBar) {
-      this.setState({ hiddenControlBar: false });
+    if (controlBarHidden) {
+      this.setState({ controlBarHidden: false });
     }
   };
 
   onPlayerKeyDown = e => {
-    const { playedSeconds, progress, ready } = this.state;
+    const { progress, ready, percentPerSec } = this.state;
     if (!ready) {
       return;
     }
@@ -247,7 +285,6 @@ class VideoPlayer extends React.Component {
       next5s = false;
       prev5s = true;
     }
-    const percentPerSec = progress / playedSeconds;
     const nextProgress = Math.min(100, Math.max(0, progress + percentPerSec * sectPerStep));
     this.player.seekTo(nextProgress / 100);
     this.setState({
@@ -426,25 +463,187 @@ class VideoPlayer extends React.Component {
     );
   };
 
-  root;
-
-  render() {
+  renderBufferProgress = () => {
+    const { classes, screenlistInterval, screenlist } = this.props;
     const {
-      classes, src, style, controls, className, ...res
-    } = this.props;
-    const {
-      playing,
-      progress,
-      fullscreen,
-      hiddenControlBar,
-      ready,
-      muted,
-      volume,
-      settingsOpening,
-      next5s,
-      prev5s,
-      currentSrc,
+      progress, ready, screenlistShowing, currentScreenshot,
     } = this.state;
+    return (
+      <Slider
+        className={classes.bufferProgress}
+        classes={{
+          thumb: classes.bufferProgressThumb,
+          trackBefore: classes.bufferProgressTrackBefore,
+          trackAfter: classes.bufferProgressTrackAfter,
+        }}
+        value={progress}
+        disabled={!ready}
+        onChange={(e, prog) => {
+          if (!ready) {
+            return;
+          }
+          const duration = this.player.getDuration();
+          const screenshotExpectedNum = duration / screenlistInterval;
+          const currentScreenshotIndex = Math.floor((screenshotExpectedNum / 100) * prog);
+          if (screenlist[currentScreenshotIndex]) {
+            this.setState({
+              progress: prog,
+              currentScreenshot: screenlist[currentScreenshotIndex],
+            });
+          } else {
+            this.setState({
+              progress: prog,
+            });
+          }
+          this.player.seekTo(prog / 100);
+        }}
+        onDragStart={() => {
+          this.setState({ screenlistShowing: true });
+        }}
+        onDragEnd={() => {
+          this.setState({ screenlistShowing: false });
+        }}
+        thumb={
+          !ready ? null : (
+            <div
+              className={classes.screenlist.concat(
+                ' animated ',
+                !screenlistShowing ? 'fadeOut' : 'fadeIn',
+              )}
+            >
+              <div className={classes.screenlistImgWrapper}>
+                <img
+                  key={currentScreenshot.replace(/\.(jpeg|jpg|png|gif|svg)$/, '')}
+                  alt={currentScreenshot}
+                  src={currentScreenshot}
+                />
+              </div>
+            </div>
+          )
+        }
+      />
+    );
+  };
+
+  renderPlayer = () => {
+    const { classes } = this.props;
+    const {
+      currentSrc, playing, volume, muted,
+    } = this.state;
+    return (
+      <div
+        role="button"
+        className={classes.playerWrapper}
+        tabIndex={0}
+        onClick={this.togglePlaying}
+        onMouseMove={this.onMouseMove}
+        onKeyDown={this.onPlayerKeyDown}
+      >
+        <ReactPlayer
+          url={currentSrc}
+          width="100%"
+          height="100%"
+          playing={playing}
+          volume={volume / 100}
+          muted={muted}
+          onBuffer={() => {
+            this.setState({ buffering: true });
+          }}
+          onPlay={() => {
+            this.setState({
+              ended: false,
+              buffering: false,
+            });
+          }}
+          onReady={ref => {
+            this.player = ref;
+            this.player.wrapper.querySelector('iframe').style.visibility = 'visible';
+            this.setState({
+              buffering: false,
+              ready: true,
+            });
+          }}
+          onProgress={({ playedSeconds, played }) => {
+            const currentProgress = played * 100;
+            const percentPerSec = currentProgress / playedSeconds;
+
+            this.setState({
+              // playedSeconds,
+              progress: currentProgress,
+              percentPerSec,
+              buffering: false,
+            });
+          }}
+          onEnded={() => {
+            this.setState({
+              ended: true,
+            });
+          }}
+          onError={err => {
+            console.error(err);
+          }}
+          progressInterval={100}
+        />
+      </div>
+    );
+  };
+
+  renderControlBarPlayPauseButton = () => {
+    const { classes } = this.props;
+    const { playing, ready } = this.state;
+    return (
+      <IconButton
+        className={classes.controlBarButton}
+        disabled={!ready}
+        onClick={this.togglePlaying}
+      >
+        {!playing ? (
+          <PlayCircleFilled
+            classes={{
+              colorPrimary: classes.controlBarButtonPrimaryColor,
+            }}
+            color="primary"
+          />
+        ) : (
+          <PauseCircleFilled
+            classes={{
+              colorPrimary: classes.controlBarButtonPrimaryColor,
+            }}
+            color="primary"
+          />
+        )}
+      </IconButton>
+    );
+  };
+
+  renderPreviousNext5s = () => {
+    const { classes } = this.props;
+    const { prev5s, next5s } = this.state;
+    return [
+      !prev5s ? null : (
+        <Replay5
+          classes={{
+            colorPrimary: classes.controlBarButtonPrimaryColor,
+          }}
+          color="primary"
+          className={classes.prev5s.concat(' animated fadeOut delay-0.5s')}
+        />
+      ),
+      !next5s ? null : (
+        <Forward5
+          classes={{
+            colorPrimary: classes.controlBarButtonPrimaryColor,
+          }}
+          color="primary"
+          className={classes.next5s.concat(' animated fadeOut delay-0.5s')}
+        />
+      ),
+    ];
+  };
+
+  renderSettings = () => {
+    const { classes, ...res } = this.props;
+    const { ready, settingsOpening, currentSrc } = this.state;
     let supportedQualities = [
       {
         resolution: 'Auto',
@@ -472,6 +671,131 @@ class VideoPlayer extends React.Component {
       ({ resolution }, { resolution: nextResolution }) => resolution > nextResolution,
     );
     return (
+      <IconButton
+        className={classes.controlBarButton}
+        disabled={!ready}
+        onClick={() => {
+          this.setState({
+            settingsOpening: !settingsOpening,
+          });
+        }}
+        ref={ref => {
+          if (!ref) {
+            return;
+          }
+          const btn = findDOMNode(ref);
+          if (!btn) {
+            return;
+          }
+          this.settingButton = btn;
+        }}
+      >
+        <Settings
+          classes={{
+            colorPrimary: classes.controlBarButtonPrimaryColor,
+          }}
+          color="primary"
+        />
+        <Menu
+          anchorEl={this.settingButton}
+          open={settingsOpening}
+          onClose={this.handleClose}
+          classes={{ paper: classes.settingPaper }}
+          container={this.root}
+        >
+          {supportedQualities.map(({ source, resolution }) => (
+            <MenuItem
+              key={resolution}
+              selected={source === currentSrc}
+              onClick={() => {
+                this.setState({
+                  settingsOpening: !settingsOpening,
+                  currentSrc: source,
+                });
+              }}
+              className={classes.settingMenuItem}
+            >
+              {resolution}
+            </MenuItem>
+          ))}
+        </Menu>
+      </IconButton>
+    );
+  };
+
+  renderFullScreenButton = () => {
+    const { classes } = this.props;
+    const { ready, fullscreen } = this.state;
+    return (
+      <IconButton
+        className={classes.controlBarButton}
+        disabled={!ready}
+        onClick={() => {
+          screenfull.toggle(findDOMNode(this));
+          this.setState({
+            fullscreen: !fullscreen,
+            controlBarHidden: true,
+          });
+        }}
+      >
+        {!fullscreen ? (
+          <Fullscreen
+            classes={{
+              colorPrimary: classes.controlBarButtonPrimaryColor,
+            }}
+            color="primary"
+          />
+        ) : (
+          <FullscreenExit
+            classes={{
+              colorPrimary: classes.controlBarButtonPrimaryColor,
+            }}
+            color="primary"
+          />
+        )}
+      </IconButton>
+    );
+  };
+
+  renderControls = () => {
+    const { classes, controls } = this.props;
+    const { controlBarHidden, fullscreen } = this.state;
+    return !controls ? null : (
+      <AppBar
+        position="absolute"
+        classes={{
+          root: classes.controlBar.concat(
+            !controlBarHidden || !fullscreen ? '' : ' animated slideOutDown delay-1s',
+          ),
+        }}
+      >
+        <Toolbar>
+          {this.renderControlBarPlayPauseButton()}
+          {this.renderVolumeController()}
+          {this.renderBufferProgress()}
+          {this.renderSettings()}
+          {this.renderFullScreenButton()}
+        </Toolbar>
+      </AppBar>
+    );
+  };
+
+  root;
+
+  render() {
+    const {
+      classes,
+      src,
+      style,
+      controls,
+      className,
+      screenlist,
+      screenlistInterval,
+      ...res
+    } = this.props;
+    const { fullscreen } = this.state;
+
+    return (
       <div
         className={classes.root.concat(' ', className || '')}
         ref={ref => {
@@ -485,212 +809,17 @@ class VideoPlayer extends React.Component {
             ? style
             : {
               ...style,
-              width: '100vw',
-              height: '100vh',
+              width: '100%',
+              height: '100%',
             }
         }
         {...res}
       >
         <div className={classes.wrapper}>
-          <div
-            role="button"
-            className={classes.playerWrapper}
-            tabIndex={0}
-            onClick={this.togglePlaying}
-            onMouseMove={this.onMouseMove}
-            onKeyDown={this.onPlayerKeyDown}
-          >
-            <ReactPlayer
-              url={currentSrc}
-              width="100%"
-              height="100%"
-              playing={playing}
-              volume={volume / 100}
-              muted={muted}
-              onBuffer={() => {
-                this.setState({ buffering: true });
-              }}
-              onPlay={() => {
-                this.setState({
-                  ended: false,
-                  buffering: false,
-                });
-              }}
-              onReady={ref => {
-                this.player = ref;
-                this.player.wrapper.querySelector('iframe').style.visibility = 'visible';
-                this.setState({
-                  buffering: false,
-                  ready: true,
-                });
-              }}
-              onProgress={({ playedSeconds, played }) => {
-                this.setState({
-                  playedSeconds,
-                  progress: played * 100,
-                  buffering: false,
-                });
-              }}
-              onEnded={() => {
-                this.setState({
-                  ended: true,
-                });
-              }}
-              onError={err => {
-                console.error(err);
-              }}
-              progressInterval={100}
-            />
-          </div>
+          {this.renderPlayer()}
           {this.renderPlayPauseButton()}
-          {!prev5s ? null : (
-            <Replay5
-              classes={{
-                colorPrimary: classes.controlBarButtonPrimaryColor,
-              }}
-              color="primary"
-              className={classes.prev5s.concat(' animated fadeOut delay-1s')}
-            />
-          )}
-          {!next5s ? null : (
-            <Forward5
-              classes={{
-                colorPrimary: classes.controlBarButtonPrimaryColor,
-              }}
-              color="primary"
-              className={classes.next5s.concat(' animated fadeOut delay-1s')}
-            />
-          )}
-          {!controls ? null : (
-            <AppBar
-              position="absolute"
-              classes={{
-                root: classes.controlBar.concat(
-                  !hiddenControlBar || !fullscreen ? '' : ' animated slideOutDown delay-1s',
-                ),
-              }}
-            >
-              <Toolbar>
-                <IconButton
-                  className={classes.controlBarButton}
-                  disabled={!ready}
-                  onClick={this.togglePlaying}
-                >
-                  {!playing ? (
-                    <PlayCircleFilled
-                      classes={{
-                        colorPrimary: classes.controlBarButtonPrimaryColor,
-                      }}
-                      color="primary"
-                    />
-                  ) : (
-                    <PauseCircleFilled
-                      classes={{
-                        colorPrimary: classes.controlBarButtonPrimaryColor,
-                      }}
-                      color="primary"
-                    />
-                  )}
-                </IconButton>
-                {this.renderVolumeController()}
-                <Slider
-                  className={classes.bufferProgress}
-                  classes={{
-                    thumb: classes.bufferProgressThumb,
-                    trackBefore: classes.bufferProgressTrackBefore,
-                    trackAfter: classes.bufferProgressTrackAfter,
-                  }}
-                  value={progress}
-                  disabled={!ready}
-                  onChange={(e, prog) => {
-                    if (!ready) {
-                      return;
-                    }
-                    this.setState({
-                      progress: prog,
-                    });
-                    this.player.seekTo(prog / 100);
-                  }}
-                />
-                <IconButton
-                  className={classes.controlBarButton}
-                  disabled={!ready}
-                  onClick={() => {
-                    this.setState({
-                      settingsOpening: !settingsOpening,
-                    });
-                  }}
-                  ref={ref => {
-                    if (!ref) {
-                      return;
-                    }
-                    const btn = findDOMNode(ref);
-                    if (!btn) {
-                      return;
-                    }
-                    this.settingButton = btn;
-                  }}
-                >
-                  <Settings
-                    classes={{
-                      colorPrimary: classes.controlBarButtonPrimaryColor,
-                    }}
-                    color="primary"
-                  />
-                  <Menu
-                    anchorEl={this.settingButton}
-                    open={settingsOpening}
-                    onClose={this.handleClose}
-                    classes={{ paper: classes.settingPaper }}
-                    container={this.root}
-                  >
-                    {supportedQualities.map(({ source, resolution }) => (
-                      <MenuItem
-                        key={resolution}
-                        selected={source === currentSrc}
-                        onClick={() => {
-                          this.setState({
-                            settingsOpening: !settingsOpening,
-                            currentSrc: source,
-                          });
-                        }}
-                        className={classes.settingMenuItem}
-                      >
-                        {resolution}
-                      </MenuItem>
-                    ))}
-                  </Menu>
-                </IconButton>
-                <IconButton
-                  className={classes.controlBarButton}
-                  disabled={!ready}
-                  onClick={() => {
-                    screenfull.toggle(findDOMNode(this));
-                    this.setState({
-                      fullscreen: !fullscreen,
-                      hiddenControlBar: true,
-                    });
-                  }}
-                >
-                  {!fullscreen ? (
-                    <Fullscreen
-                      classes={{
-                        colorPrimary: classes.controlBarButtonPrimaryColor,
-                      }}
-                      color="primary"
-                    />
-                  ) : (
-                    <FullscreenExit
-                      classes={{
-                        colorPrimary: classes.controlBarButtonPrimaryColor,
-                      }}
-                      color="primary"
-                    />
-                  )}
-                </IconButton>
-              </Toolbar>
-            </AppBar>
-          )}
+          {this.renderPreviousNext5s()}
+          {this.renderControls()}
         </div>
       </div>
     );
