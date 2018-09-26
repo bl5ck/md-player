@@ -1,12 +1,10 @@
 import React from 'react';
 import { findDOMNode } from 'react-dom';
 import PropTypes from 'prop-types';
-import ReactPlayer from 'react-player';
 import screenfull from 'screenfull';
 import ClickAwayListener from '@material-ui/core/ClickAwayListener';
 import { withStyles } from '@material-ui/core/styles';
 // Material components
-import CircularProgress from '@material-ui/core/CircularProgress';
 import Slider from '@material-ui/lab/Slider';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
@@ -19,7 +17,6 @@ import GridListTileBar from '@material-ui/core/GridListTileBar';
 // Icons
 import PauseCircleFilled from '@material-ui/icons/PauseCircleFilled';
 import PlayCircleFilled from '@material-ui/icons/PlayCircleFilled';
-import Replay from '@material-ui/icons/Replay';
 import Fullscreen from '@material-ui/icons/Fullscreen';
 import FullscreenExit from '@material-ui/icons/FullscreenExit';
 import VolumeUp from '@material-ui/icons/VolumeUp';
@@ -31,6 +28,9 @@ import Replay5 from '@material-ui/icons/Replay5';
 import Forward5 from '@material-ui/icons/Forward5';
 import Info from '@material-ui/icons/Info';
 import 'animate.css/animate.min.css';
+
+import CorePlayer from './CorePlayer';
+import PlayPause from './PlayPause';
 
 const progressSize = 80;
 const progressMargin = -progressSize / 2;
@@ -247,6 +247,9 @@ const styles = theme => {
         pointerEvents: 'none',
       },
     },
+    seriesItem: {
+      cursor: 'pointer',
+    },
   };
 };
 
@@ -274,6 +277,8 @@ class VideoPlayer extends React.Component {
         screenlist: PropTypes.arrayOf(PropTypes.string),
       }),
     ),
+    onSourceChange: PropTypes.func,
+    onSeriesItemClick: PropTypes.func,
   };
 
   static defaultProps = {
@@ -287,6 +292,8 @@ class VideoPlayer extends React.Component {
     screenlist: [],
     screenlistInterval: 0,
     series: [],
+    onSourceChange: null,
+    onSeriesItemClick: null,
   };
 
   constructor(props) {
@@ -321,6 +328,48 @@ class VideoPlayer extends React.Component {
     if (ended) {
       this.player.seekTo(0);
     }
+  };
+
+  onReady = ref => {
+    this.player = ref;
+    this.player.wrapper.querySelector('iframe').style.visibility = 'visible';
+    this.setState({
+      buffering: false,
+      ready: true,
+    });
+  };
+
+  onPlay = () => {
+    this.setState({
+      ended: false,
+      buffering: false,
+    });
+  };
+
+  onBuffer = () => {
+    this.setState({ buffering: true });
+  };
+
+  onProgress = ({ playedSeconds, played }) => {
+    const currentProgress = played * 100;
+    const percentPerSec = currentProgress / playedSeconds;
+
+    this.setState({
+      // playedSeconds,
+      progress: currentProgress,
+      percentPerSec,
+      buffering: false,
+    });
+  };
+
+  onEnded = () => {
+    this.setState({
+      ended: true,
+    });
+  };
+
+  onError = err => {
+    console.error(err);
   };
 
   onMouseMove = () => {
@@ -379,50 +428,16 @@ class VideoPlayer extends React.Component {
     const {
       buffering, ended, playing, ready,
     } = this.state;
-    if (!buffering) {
-      let iconButtonClass;
-      if (!ended) {
-        iconButtonClass = !playing ? '' : ' animated fadeOut delay-0.5s';
-      } else {
-        iconButtonClass = ' ended';
-      }
-      let icon;
-      if (!playing) {
-        icon = (
-          <PlayCircleFilled
-            classes={{
-              colorPrimary: classes.controlBarButtonPrimaryColor,
-            }}
-            color="primary"
-            fontSize="inherit"
-          />
-        );
-      } else {
-        icon = !ended ? (
-          <PauseCircleFilled
-            classes={{
-              colorPrimary: classes.controlBarButtonPrimaryColor,
-            }}
-            color="primary"
-            fontSize="inherit"
-          />
-        ) : (
-          <Replay
-            classes={{
-              colorPrimary: classes.controlBarButtonPrimaryColor,
-            }}
-            color="primary"
-            fontSize="inherit"
-          />
-        );
-      }
-      return (
-        <IconButton className={classes.playPauseButton.concat(iconButtonClass)} disabled={!ready}>
-          {icon}
-        </IconButton>
-      );
-    }
-    return <CircularProgress className={classes.progress} thickness={5} size={progressSize} />;
+    return (
+      <PlayPause
+        classes={classes}
+        buffering={buffering}
+        ended={ended}
+        playing={playing}
+        ready={ready}
+        progressSize={progressSize}
+      />
+    );
   };
 
   renderVolumeController = () => {
@@ -592,60 +607,22 @@ class VideoPlayer extends React.Component {
       currentSrc, playing, volume, muted,
     } = this.state;
     return (
-      <div
-        role="button"
-        className={classes.playerWrapper}
-        tabIndex={0}
-        onClick={this.togglePlaying}
+      <CorePlayer
+        currentSrc={currentSrc}
+        playing={playing}
+        volume={volume}
+        muted={muted}
+        classes={classes}
+        togglePlaying={this.togglePlaying}
         onMouseMove={this.onMouseMove}
-        onKeyDown={this.onPlayerKeyDown}
-      >
-        <ReactPlayer
-          url={currentSrc}
-          width="100%"
-          height="100%"
-          playing={playing}
-          volume={volume / 100}
-          muted={muted}
-          onBuffer={() => {
-            this.setState({ buffering: true });
-          }}
-          onPlay={() => {
-            this.setState({
-              ended: false,
-              buffering: false,
-            });
-          }}
-          onReady={ref => {
-            this.player = ref;
-            this.player.wrapper.querySelector('iframe').style.visibility = 'visible';
-            this.setState({
-              buffering: false,
-              ready: true,
-            });
-          }}
-          onProgress={({ playedSeconds, played }) => {
-            const currentProgress = played * 100;
-            const percentPerSec = currentProgress / playedSeconds;
-
-            this.setState({
-              // playedSeconds,
-              progress: currentProgress,
-              percentPerSec,
-              buffering: false,
-            });
-          }}
-          onEnded={() => {
-            this.setState({
-              ended: true,
-            });
-          }}
-          onError={err => {
-            console.error(err);
-          }}
-          progressInterval={100}
-        />
-      </div>
+        onPlayerKeyDown={this.onPlayerKeyDown}
+        onReady={this.onReady}
+        onPlay={this.onPlay}
+        onBuffer={this.onBuffer}
+        onProgress={this.onProgress}
+        onEnded={this.onEnded}
+        onError={this.onError}
+      />
     );
   };
 
@@ -705,7 +682,7 @@ class VideoPlayer extends React.Component {
   };
 
   renderSettings = () => {
-    const { classes, ...res } = this.props;
+    const { classes, onSourceChange, ...res } = this.props;
     const { ready, settingsOpening, currentSrc } = this.state;
     let supportedQualities = [
       {
@@ -771,6 +748,9 @@ class VideoPlayer extends React.Component {
               key={resolution}
               selected={source === currentSrc}
               onClick={() => {
+                if (onSourceChange) {
+                  onSourceChange(source);
+                }
                 this.setState({
                   settingsOpening: !settingsOpening,
                   currentSrc: source,
@@ -844,13 +824,31 @@ class VideoPlayer extends React.Component {
   };
 
   renderSeries = () => {
-    const { classes, series } = this.props;
+    const {
+      classes, series, onSourceChange, onSeriesItemClick,
+    } = this.props;
     const { ready } = this.state;
     return !ready || !series.length ? null : (
       <div className={classes.series}>
         <GridList cellHeight={140} className={classes.gridList}>
           {series.map(video => (
-            <GridListTile className={classes.seriesItem} key={video.thumbnail} cols={2} role="button">
+            <GridListTile
+              className={classes.seriesItem}
+              key={video.thumbnail}
+              cols={2}
+              role="button"
+              onClick={() => {
+                if (onSeriesItemClick) {
+                  onSeriesItemClick(video);
+                }
+                if (onSourceChange) {
+                  onSourceChange(video.src);
+                }
+                this.setState({
+                  currentSrc: video.src,
+                });
+              }}
+            >
               <img
                 src={video.thumbnail || (video.screenlist && video.screenlist[0])}
                 alt={video.title}
@@ -861,7 +859,7 @@ class VideoPlayer extends React.Component {
                   <span
                     dangerouslySetInnerHTML={!video.subtitle ? null : { __html: video.subtitle }}
                   />
-                )}
+)}
                 actionIcon={(
                   <IconButton className={classes.icon}>
                     <Info
@@ -871,7 +869,7 @@ class VideoPlayer extends React.Component {
                       color="primary"
                     />
                   </IconButton>
-                )}
+)}
               />
             </GridListTile>
           ))}
@@ -891,6 +889,8 @@ class VideoPlayer extends React.Component {
       className,
       screenlist,
       screenlistInterval,
+      onSourceChange,
+      onSeriesItemClick,
       ...res
     } = this.props;
     const { fullscreen } = this.state;

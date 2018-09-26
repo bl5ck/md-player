@@ -1,7 +1,7 @@
 import React from 'react';
-import VideoPlayer from './VideoPlayer';
+import VideoPlayer from './Player/VideoPlayer';
 import withRoot from './withRoot';
 
-const App = ({ src, ...props }) => <VideoPlayer src={src} {...props} />;
+const App = props => <VideoPlayer {...props} />;
 
 export default withRoot(App);
