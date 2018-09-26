@@ -9,28 +9,23 @@ import Slider from '@material-ui/lab/Slider';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import IconButton from '@material-ui/core/IconButton';
-import Menu from '@material-ui/core/Menu';
-import MenuItem from '@material-ui/core/MenuItem';
 import GridList from '@material-ui/core/GridList';
 import GridListTile from '@material-ui/core/GridListTile';
 import GridListTileBar from '@material-ui/core/GridListTileBar';
 // Icons
-import PauseCircleFilled from '@material-ui/icons/PauseCircleFilled';
-import PlayCircleFilled from '@material-ui/icons/PlayCircleFilled';
 import Fullscreen from '@material-ui/icons/Fullscreen';
 import FullscreenExit from '@material-ui/icons/FullscreenExit';
 import VolumeUp from '@material-ui/icons/VolumeUp';
 import VolumeDown from '@material-ui/icons/VolumeDown';
 import VolumeOff from '@material-ui/icons/VolumeOff';
 import VolumeMute from '@material-ui/icons/VolumeMute';
-import Settings from '@material-ui/icons/Settings';
-import Replay5 from '@material-ui/icons/Replay5';
-import Forward5 from '@material-ui/icons/Forward5';
 import Info from '@material-ui/icons/Info';
 import 'animate.css/animate.min.css';
 
 import CorePlayer from './CorePlayer';
 import PlayPause from './PlayPause';
+import PreviousNext5s from './PreviousNext5s';
+import Settings from './Settings';
 
 const progressSize = 80;
 const progressMargin = -progressSize / 2;
@@ -73,7 +68,9 @@ const styles = theme => {
       height: '100%',
       top: 0,
       left: 0,
-      cursor: 'pointer',
+      '&:not([disabled])': {
+        cursor: 'pointer',
+      },
       '&> div': {
         pointerEvents: 'none',
       },
@@ -82,6 +79,7 @@ const styles = theme => {
       height: controlBarHeight,
       bottom: 0,
       top: 'auto',
+      animationDuration: '0.3s',
     },
     controlBarButton: {
       marginTop: -35,
@@ -304,6 +302,8 @@ class VideoPlayer extends React.Component {
       buffering: true,
       ended: false,
       // playedSeconds: 0,
+      prev5s: false,
+      next5s: false,
       progress: 0,
       fullscreen: false,
       settingsOpening: false,
@@ -379,6 +379,9 @@ class VideoPlayer extends React.Component {
     }
     if (controlBarHidden) {
       this.setState({ controlBarHidden: false });
+      setTimeout(() => {
+        this.setState({ controlBarHidden: true });
+      }, 3000);
     }
   };
 
@@ -421,6 +424,18 @@ class VideoPlayer extends React.Component {
     this.setState({ muted: !muted });
   };
 
+  onResolutionChange = source => {
+    const { onSourceChange } = this.props;
+    const { settingsOpening } = this.state;
+    if (onSourceChange) {
+      onSourceChange(source);
+    }
+    this.setState({
+      settingsOpening: !settingsOpening,
+      currentSrc: source,
+    });
+  }
+
   player;
 
   renderPlayPauseButton = () => {
@@ -436,6 +451,7 @@ class VideoPlayer extends React.Component {
         playing={playing}
         ready={ready}
         progressSize={progressSize}
+        togglePlaying={this.togglePlaying}
       />
     );
   };
@@ -604,10 +620,11 @@ class VideoPlayer extends React.Component {
   renderPlayer = () => {
     const { classes } = this.props;
     const {
-      currentSrc, playing, volume, muted,
+      ready, currentSrc, playing, volume, muted,
     } = this.state;
     return (
       <CorePlayer
+        ready={ready}
         currentSrc={currentSrc}
         playing={playing}
         volume={volume}
@@ -628,141 +645,53 @@ class VideoPlayer extends React.Component {
 
   renderControlBarPlayPauseButton = () => {
     const { classes } = this.props;
-    const { playing, ready } = this.state;
+    const {
+      playing, ready, buffering, ended,
+    } = this.state;
     return (
-      <IconButton
-        className={classes.controlBarButton}
-        disabled={!ready}
-        onClick={this.togglePlaying}
-      >
-        {!playing ? (
-          <PlayCircleFilled
-            classes={{
-              colorPrimary: classes.controlBarButtonPrimaryColor,
-            }}
-            color="primary"
-          />
-        ) : (
-          <PauseCircleFilled
-            classes={{
-              colorPrimary: classes.controlBarButtonPrimaryColor,
-            }}
-            color="primary"
-          />
-        )}
-      </IconButton>
+      <PlayPause
+        classes={classes}
+        container="controlBar"
+        buffering={buffering}
+        ended={ended}
+        playing={playing}
+        ready={ready}
+        progressSize={progressSize}
+        togglePlaying={this.togglePlaying}
+      />
     );
   };
 
   renderPreviousNext5s = () => {
     const { classes } = this.props;
     const { prev5s, next5s } = this.state;
-    return [
-      !prev5s ? null : (
-        <Replay5
-          classes={{
-            colorPrimary: classes.controlBarButtonPrimaryColor,
-          }}
-          key="video-previous-5s"
-          color="primary"
-          className={classes.prev5s.concat(' animated fadeOut delay-0.5s')}
-        />
-      ),
-      !next5s ? null : (
-        <Forward5
-          classes={{
-            colorPrimary: classes.controlBarButtonPrimaryColor,
-          }}
-          key="video-next-5s"
-          color="primary"
-          className={classes.next5s.concat(' animated fadeOut delay-0.5s')}
-        />
-      ),
-    ];
+    return (
+      <PreviousNext5s
+        classes={classes}
+        prev5s={prev5s}
+        next5s={next5s}
+      />
+    );
   };
 
   renderSettings = () => {
     const { classes, onSourceChange, ...res } = this.props;
     const { ready, settingsOpening, currentSrc } = this.state;
-    let supportedQualities = [
-      {
-        resolution: 'Auto',
-        source: currentSrc,
-      },
-    ];
-    Object.keys(res).forEach(key => {
-      // src240p,
-      // src360p,
-      // src480p,
-      // src720p,
-      // src1080p,
-      if (!res[key] || !/^src\d{3,}p$/.test(key)) {
-        return;
-      }
-      const resolution = key.replace('src', '');
-      const source = res[key];
-      supportedQualities.push({
-        resolution,
-        source,
-      });
-    });
-    // sort resolutions
-    supportedQualities = supportedQualities.sort(
-      ({ resolution }, { resolution: nextResolution }) => resolution > nextResolution,
-    );
     return (
-      <IconButton
-        className={classes.controlBarButton}
-        disabled={!ready}
-        onClick={() => {
+      <Settings
+        classes={classes}
+        onResolutionChange={this.onResolutionChange}
+        toggleSettings={() => {
           this.setState({
             settingsOpening: !settingsOpening,
           });
         }}
-        ref={ref => {
-          if (!ref) {
-            return;
-          }
-          const btn = findDOMNode(ref);
-          if (!btn) {
-            return;
-          }
-          this.settingButton = btn;
-        }}
-      >
-        <Settings
-          classes={{
-            colorPrimary: classes.controlBarButtonPrimaryColor,
-          }}
-          color="primary"
-        />
-        <Menu
-          anchorEl={this.settingButton}
-          open={settingsOpening}
-          onClose={this.handleClose}
-          classes={{ paper: classes.settingPaper }}
-          container={this.root}
-        >
-          {supportedQualities.map(({ source, resolution }) => (
-            <MenuItem
-              key={resolution}
-              selected={source === currentSrc}
-              onClick={() => {
-                if (onSourceChange) {
-                  onSourceChange(source);
-                }
-                this.setState({
-                  settingsOpening: !settingsOpening,
-                  currentSrc: source,
-                });
-              }}
-              className={classes.settingMenuItem}
-            >
-              {resolution}
-            </MenuItem>
-          ))}
-        </Menu>
-      </IconButton>
+        ready={ready}
+        settingsOpening={settingsOpening}
+        currentSrc={currentSrc}
+        container={this.root}
+        {...res}
+      />
     );
   };
 
@@ -803,13 +732,19 @@ class VideoPlayer extends React.Component {
   renderControls = () => {
     const { classes, controls } = this.props;
     const { controlBarHidden, fullscreen } = this.state;
+    let controlBarClass = ' animated delay-0.5s';
+    if (fullscreen) {
+      if (!controlBarHidden) {
+        controlBarClass = controlBarClass.concat(' ', 'slideInUp');
+      } else {
+        controlBarClass = controlBarClass.concat(' ', 'slideOutDown');
+      }
+    }
     return !controls ? null : (
       <AppBar
         position="absolute"
         classes={{
-          root: classes.controlBar.concat(
-            !controlBarHidden || !fullscreen ? '' : ' animated slideOutDown delay-1s',
-          ),
+          root: classes.controlBar.concat(controlBarClass),
         }}
       >
         <Toolbar>

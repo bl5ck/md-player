@@ -3,6 +3,7 @@ import ReactPlayer from 'react-player';
 import PropTypes from 'prop-types';
 
 const CorePlayer = ({
+  ready,
   currentSrc,
   playing,
   volume,
@@ -25,6 +26,7 @@ const CorePlayer = ({
     onClick={togglePlaying}
     onMouseMove={onMouseMove}
     onKeyDown={onPlayerKeyDown}
+    disabled={!ready}
   >
     <ReactPlayer
       url={currentSrc}
@@ -44,6 +46,7 @@ const CorePlayer = ({
   </div>
 );
 CorePlayer.propTypes = {
+  ready: PropTypes.bool.isRequired,
   currentSrc: PropTypes.string.isRequired,
   playing: PropTypes.bool.isRequired,
   volume: PropTypes.number.isRequired,

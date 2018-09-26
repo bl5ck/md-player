@@ -9,8 +9,38 @@ import PlayCircleFilled from '@material-ui/icons/PlayCircleFilled';
 import Replay from '@material-ui/icons/Replay';
 
 const PlayPause = ({
-  classes, buffering, ended, playing, ready, progressSize,
+  classes,
+  buffering,
+  ended,
+  playing,
+  ready,
+  progressSize,
+  container,
+  togglePlaying,
 }) => {
+  // in control bar button
+  if (container !== 'player') {
+    return (
+      <IconButton className={classes.controlBarButton} disabled={!ready} onClick={togglePlaying}>
+        {!playing ? (
+          <PlayCircleFilled
+            classes={{
+              colorPrimary: classes.controlBarButtonPrimaryColor,
+            }}
+            color="primary"
+          />
+        ) : (
+          <PauseCircleFilled
+            classes={{
+              colorPrimary: classes.controlBarButtonPrimaryColor,
+            }}
+            color="primary"
+          />
+        )}
+      </IconButton>
+    );
+  }
+  // in player button
   if (!buffering) {
     let iconButtonClass;
     if (!ended) {
@@ -49,7 +79,11 @@ const PlayPause = ({
       );
     }
     return (
-      <IconButton className={classes.playPauseButton.concat(iconButtonClass)} disabled={!ready}>
+      <IconButton
+        onClick={togglePlaying}
+        className={classes.playPauseButton.concat(iconButtonClass)}
+        disabled={!ready}
+      >
         {icon}
       </IconButton>
     );
@@ -60,6 +94,7 @@ const PlayPause = ({
 PlayPause.propTypes = {
   classes: PropTypes.shape({
     playPauseButton: PropTypes.string.isRequired,
+    controlBarButton: PropTypes.string.isRequired,
     controlBarButtonPrimaryColor: PropTypes.string.isRequired,
     progress: PropTypes.string.isRequired,
   }).isRequired,
@@ -68,5 +103,12 @@ PlayPause.propTypes = {
   playing: PropTypes.bool.isRequired,
   ready: PropTypes.bool.isRequired,
   progressSize: PropTypes.number.isRequired,
+  togglePlaying: PropTypes.func.isRequired,
+  container: PropTypes.oneOf(['player', 'controlBar']),
 };
+
+PlayPause.defaultProps = {
+  container: 'player',
+};
+
 export default PlayPause;

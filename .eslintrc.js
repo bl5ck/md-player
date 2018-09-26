@@ -22,5 +22,6 @@ module.exports = {
     'arrow-parens': ['error', 'as-needed'],
     'no-console': ['warn', { allow: ['warn', 'error'] }],
     'no-new-func': 'off',
+    'react/forbid-prop-types': 'off',
   },
 };
