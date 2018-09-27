@@ -22,6 +22,7 @@ const Series = ({
   toggle,
 }) => {
   const renderVideoSubtitle = video => (
+    // eslint-disable-next-line react/no-danger
     <span dangerouslySetInnerHTML={!video.subtitle ? null : { __html: video.subtitle }} />
   );
   const actionIcon = (
