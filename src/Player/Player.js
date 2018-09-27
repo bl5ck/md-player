@@ -368,7 +368,6 @@ class Player extends React.Component {
     const percentPerSec = currentProgress / playedSeconds;
 
     this.setState({
-      // playedSeconds,
       progress: currentProgress,
       percentPerSec,
       buffering: false,
@@ -548,6 +547,8 @@ class Player extends React.Component {
   };
 
   player;
+
+  root;
 
   renderPlayPauseButton = () => {
     const { classes } = this.props;
@@ -750,8 +751,6 @@ class Player extends React.Component {
       />,
     ];
   };
-
-  root;
 
   render() {
     const {

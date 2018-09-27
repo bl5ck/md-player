@@ -67,6 +67,7 @@ const Volume = ({
         disabled={!ready}
         onClick={onControlToggle}
         onDoubleClick={onMuteToggle}
+        onWheel={onWheel}
       >
         {icon}
       </IconButton>
