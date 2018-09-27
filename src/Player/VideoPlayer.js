@@ -221,13 +221,13 @@ const styles = theme => {
       flexWrap: 'wrap',
       justifyContent: 'space-around',
       overflow: 'hidden',
-      backgroundColor: 'rgba(0,0,0,0.8)',
       paddingLeft: 10,
       paddingBottom: controlBarHeight,
       right: 0,
       top: 0,
       zIndex: 1,
       userSelect: 'none',
+      pointerEvents: 'none',
       '&::before': {
         extend: gradianFadeCover,
         top: 0,
@@ -242,8 +242,29 @@ const styles = theme => {
         pointerEvents: 'none',
       },
     },
+    seriesAnimationWrapper: {
+      backgroundColor: 'rgba(0,0,0,0.8)',
+      animationDuration: '0.5s',
+      pointerEvents: 'all',
+      overflowY: 'auto',
+      overflowX: 'hidden',
+    },
+    seriesToggleButton: {
+      position: 'absolute',
+      right: 0,
+      top: '50%',
+      transform: 'translateY(-50%)',
+      pointerEvents: 'all',
+    },
     seriesItem: {
       cursor: 'pointer',
+    },
+    rightEdgeHelper: {
+      width: '5%',
+      height: '100%',
+      position: 'absolute',
+      top: 0,
+      right: 0,
     },
   };
 };
@@ -303,7 +324,7 @@ class VideoPlayer extends React.Component {
       next5s: false,
       progress: 0,
       fullscreen: false,
-      settingsOpening: false,
+      settingsShowing: false,
       controlBarHidden: false,
       muted: false,
       volume: 50,
@@ -311,6 +332,8 @@ class VideoPlayer extends React.Component {
       currentSrc: props.src,
       currentScreenshot: props.screenlist[0] || '',
       screenlistShowing: false,
+      seriesShowing: false,
+      seriesToggleButtonShowing: false,
     };
   }
 
@@ -423,15 +446,15 @@ class VideoPlayer extends React.Component {
 
   onResolutionChange = source => {
     const { onSourceChange } = this.props;
-    const { settingsOpening } = this.state;
+    const { settingsShowing } = this.state;
     if (onSourceChange) {
       onSourceChange(source);
     }
     this.setState({
-      settingsOpening: !settingsOpening,
+      settingsShowing: !settingsShowing,
       currentSrc: source,
     });
-  }
+  };
 
   player;
 
@@ -662,29 +685,23 @@ class VideoPlayer extends React.Component {
   renderPreviousNext5s = () => {
     const { classes } = this.props;
     const { prev5s, next5s } = this.state;
-    return (
-      <PreviousNext5s
-        classes={classes}
-        prev5s={prev5s}
-        next5s={next5s}
-      />
-    );
+    return <PreviousNext5s classes={classes} prev5s={prev5s} next5s={next5s} />;
   };
 
   renderSettings = () => {
     const { classes, onSourceChange, ...res } = this.props;
-    const { ready, settingsOpening, currentSrc } = this.state;
+    const { ready, settingsShowing, currentSrc } = this.state;
     return (
       <Settings
         classes={classes}
         onResolutionChange={this.onResolutionChange}
-        toggleSettings={() => {
+        toggle={() => {
           this.setState({
-            settingsOpening: !settingsOpening,
+            settingsShowing: !settingsShowing,
           });
         }}
         ready={ready}
-        settingsOpening={settingsOpening}
+        open={settingsShowing}
         currentSrc={currentSrc}
         container={this.root}
         {...res}
@@ -759,16 +776,52 @@ class VideoPlayer extends React.Component {
     const {
       classes, series, onSourceChange, onSeriesItemClick,
     } = this.props;
-    const { ready } = this.state;
-    return (
+    const { ready, seriesShowing, seriesToggleButtonShowing } = this.state;
+    return [
+      <div
+        key="rightEdgeHelper"
+        className={classes.rightEdgeHelper}
+        onMouseEnter={() => {
+          this.setState({ seriesToggleButtonShowing: true });
+        }}
+        onMouseLeave={() => {
+          this.setState({ seriesToggleButtonShowing: false });
+        }}
+      />,
       <Series
+        key="seriesPane"
         classes={classes}
         series={series}
         onSourceChange={onSourceChange}
-        onSeriesItemClick={onSeriesItemClick}
+        onSeriesItemClick={(video, ...args) => {
+          this.setState({
+            seriesShowing: false,
+            currentSrc: video.src,
+          });
+          if (onSourceChange) {
+            onSourceChange(video.src);
+          }
+          if (onSeriesItemClick) {
+            onSeriesItemClick(video, ...args);
+          }
+        }}
+        onSeriesToggleButtonMouseEnter={() => {
+          this.setState({ seriesToggleButtonShowing: true });
+        }}
+        onSeriesToggleButtonMouseLeave={() => {
+          this.setState({ seriesToggleButtonShowing: false });
+        }}
+        toggle={isSeriesShowing => {
+          this.setState({
+            seriesShowing:
+              typeof isSeriesShowing !== 'undefined' ? isSeriesShowing : !seriesShowing,
+          });
+        }}
         ready={ready}
-      />
-    );
+        open={seriesShowing}
+        toggleButtonShowing={seriesToggleButtonShowing}
+      />,
+    ];
   };
 
   root;

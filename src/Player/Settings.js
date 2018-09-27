@@ -14,9 +14,9 @@ class Settings extends React.Component {
     const {
       classes,
       ready,
-      settingsOpening,
+      open,
       currentSrc,
-      toggleSettings,
+      toggle,
       onResolutionChange,
       onMenuClose,
       container,
@@ -52,7 +52,7 @@ class Settings extends React.Component {
       <IconButton
         className={classes.controlBarButton}
         disabled={!ready}
-        onClick={toggleSettings}
+        onClick={toggle}
         ref={ref => {
           if (!ref) {
             return;
@@ -72,7 +72,7 @@ class Settings extends React.Component {
         />
         <Menu
           anchorEl={this.settingButton}
-          open={settingsOpening}
+          open={open}
           onClose={onMenuClose}
           classes={{ paper: classes.settingPaper }}
           container={container}
@@ -101,8 +101,8 @@ Settings.propTypes = {
     settingMenuItem: PropTypes.string.isRequired,
   }).isRequired,
   ready: PropTypes.bool.isRequired,
-  settingsOpening: PropTypes.bool.isRequired,
-  toggleSettings: PropTypes.func.isRequired,
+  open: PropTypes.bool.isRequired,
+  toggle: PropTypes.func.isRequired,
   currentSrc: PropTypes.string.isRequired,
   onResolutionChange: PropTypes.func.isRequired,
   container: PropTypes.object,
