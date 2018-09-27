@@ -2,20 +2,11 @@ import React from 'react';
 import { findDOMNode } from 'react-dom';
 import PropTypes from 'prop-types';
 import screenfull from 'screenfull';
-import ClickAwayListener from '@material-ui/core/ClickAwayListener';
 import { withStyles } from '@material-ui/core/styles';
 // Material components
-import Slider from '@material-ui/lab/Slider';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
-import IconButton from '@material-ui/core/IconButton';
 // Icons
-import Fullscreen from '@material-ui/icons/Fullscreen';
-import FullscreenExit from '@material-ui/icons/FullscreenExit';
-import VolumeUp from '@material-ui/icons/VolumeUp';
-import VolumeDown from '@material-ui/icons/VolumeDown';
-import VolumeOff from '@material-ui/icons/VolumeOff';
-import VolumeMute from '@material-ui/icons/VolumeMute';
 import 'animate.css/animate.min.css';
 
 import CorePlayer from './CorePlayer';
@@ -23,6 +14,9 @@ import PlayPause from './PlayPause';
 import PreviousNext5s from './PreviousNext5s';
 import Settings from './Settings';
 import Series from './Series';
+import Volume from './Volume';
+import Buffer from './Buffer';
+import Fullscreen from './Fullscreen';
 
 const progressSize = 80;
 const progressMargin = -progressSize / 2;
@@ -319,7 +313,6 @@ class VideoPlayer extends React.Component {
       playing: false,
       buffering: true,
       ended: false,
-      // playedSeconds: 0,
       prev5s: false,
       next5s: false,
       progress: 0,
@@ -456,6 +449,105 @@ class VideoPlayer extends React.Component {
     });
   };
 
+  onVolumeClickAway = () => {
+    this.setState({
+      volumeControlOpening: false,
+    });
+  };
+
+  onVolumeSlide = (e, vol) => {
+    const { ready } = this.state;
+    if (!ready) {
+      return;
+    }
+    this.setState({
+      volume: vol,
+    });
+  };
+
+  onVolumeWheel = e => {
+    const { volume } = this.state;
+    const speed = Math.abs(e.deltaY / 100);
+    let length = 10;
+    if (e.deltaY > 0) {
+      // down
+      length = -10;
+    }
+    const totalLength = length * speed;
+    this.setState({
+      volume: Math.max(0, Math.min(100, volume + totalLength)),
+    });
+  };
+
+  onBufferDrag = (e, prog) => {
+    const { screenlist, screenlistInterval } = this.props;
+    const { ready } = this.state;
+    if (!ready) {
+      return;
+    }
+    const duration = this.player.getDuration();
+    const screenshotExpectedNum = duration / screenlistInterval;
+    const currentScreenshotIndex = Math.floor((screenshotExpectedNum / 100) * prog);
+    if (screenlist[currentScreenshotIndex]) {
+      this.setState({
+        progress: prog,
+        currentScreenshot: screenlist[currentScreenshotIndex],
+      });
+    } else {
+      this.setState({
+        progress: prog,
+      });
+    }
+    this.player.seekTo(prog / 100);
+  };
+
+  onBufferDragStart = () => {
+    this.setState({ screenlistShowing: true });
+  };
+
+  onBufferDragEnd = () => {
+    this.setState({ screenlistShowing: false });
+  };
+
+  onFullscreenClick = () => {
+    const { fullscreen } = this.state;
+    screenfull.toggle(findDOMNode(this));
+    this.setState({
+      fullscreen: !fullscreen,
+      controlBarHidden: true,
+    });
+  };
+
+  onSeriesItemClick = (video, ...args) => {
+    const { onSourceChange, onSeriesItemClick } = this.props;
+    this.setState({
+      seriesShowing: false,
+      currentSrc: video.src,
+    });
+    if (onSourceChange) {
+      onSourceChange(video.src);
+    }
+    if (onSeriesItemClick) {
+      onSeriesItemClick(video, ...args);
+    }
+  };
+
+  onSeriesToggleButtonMouseEnter = () => {
+    this.setState({ seriesToggleButtonShowing: true });
+  }
+
+  onSeriesToggleButtonMouseLeave = () => {
+    this.setState({ seriesToggleButtonShowing: false });
+  }
+
+  toggleSeries = isSeriesShowing => {
+    const { seriesShowing } = this.state;
+    this.setState({
+      seriesShowing:
+        typeof isSeriesShowing !== 'undefined' ? isSeriesShowing : !seriesShowing,
+    });
+  };
+
   player;
 
   renderPlayPauseButton = () => {
@@ -481,158 +573,37 @@ class VideoPlayer extends React.Component {
     const {
       ready, muted, volume, volumeControlOpening,
     } = this.state;
-    let icon;
-    if (!muted) {
-      if (volume > 69) {
-        icon = (
-          <VolumeUp
-            classes={{
-              colorPrimary: classes.controlBarButtonPrimaryColor,
-            }}
-            color="primary"
-          />
-        );
-      } else {
-        icon = volume > 0 ? (
-          <VolumeDown
-            classes={{
-              colorPrimary: classes.controlBarButtonPrimaryColor,
-            }}
-            color="primary"
-          />
-        ) : (
-          <VolumeMute
-            classes={{
-              colorPrimary: classes.controlBarButtonPrimaryColor,
-            }}
-            color="primary"
-          />
-        );
-      }
-    } else {
-      icon = (
-        <VolumeOff
-          classes={{
-            colorPrimary: classes.controlBarButtonPrimaryColor,
-          }}
-          color="primary"
-        />
-      );
-    }
     return (
-      <span className={classes.volumeControlWrapper}>
-        <IconButton
-          className={classes.controlBarButton.concat(' ', classes.volumeControlButton)}
-          disabled={!ready}
-          onClick={this.onVolumeControlToggle}
-          onDoubleClick={this.onVolumeMuteToggle}
-        >
-          {icon}
-        </IconButton>
-        {!volumeControlOpening ? null : (
-          <ClickAwayListener
-            onClickAway={() => {
-              this.setState({
-                volumeControlOpening: false,
-              });
-            }}
-          >
-            <Slider
-              className={classes.volumeControl}
-              classes={{
-                thumb: classes.volumeControlThumb,
-                trackBefore: classes.volumeControlTrackBefore,
-                trackAfter: classes.volumeControlTrackAfter,
-              }}
-              value={volume}
-              disabled={!ready}
-              vertical
-              reverse
-              onChange={(e, vol) => {
-                if (!ready) {
-                  return;
-                }
-                this.setState({
-                  volume: vol,
-                });
-              }}
-              onWheel={e => {
-                const speed = Math.abs(e.deltaY / 100);
-                let length = 10;
-                if (e.deltaY > 0) {
-                  // down
-                  length = -10;
-                }
-                const totalLength = length * speed;
-                this.setState({
-                  volume: Math.max(0, Math.min(100, volume + totalLength)),
-                });
-              }}
-            />
-          </ClickAwayListener>
-        )}
-      </span>
+      <Volume
+        classes={classes}
+        ready={ready}
+        muted={muted}
+        volume={volume}
+        open={volumeControlOpening}
+        onControlToggle={this.onVolumeControlToggle}
+        onMuteToggle={this.onVolumeMuteToggle}
+        onClickAway={this.onVolumeClickAway}
+        onSlide={this.onVolumeSlide}
+        onWheel={this.onVolumeWheel}
+      />
     );
   };
 
   renderBufferProgress = () => {
-    const { classes, screenlistInterval, screenlist } = this.props;
+    const { classes } = this.props;
     const {
       progress, ready, screenlistShowing, currentScreenshot,
     } = this.state;
     return (
-      <Slider
-        className={classes.bufferProgress}
-        classes={{
-          thumb: classes.bufferProgressThumb,
-          trackBefore: classes.bufferProgressTrackBefore,
-          trackAfter: classes.bufferProgressTrackAfter,
-        }}
-        value={progress}
-        disabled={!ready}
-        onChange={(e, prog) => {
-          if (!ready) {
-            return;
-          }
-          const duration = this.player.getDuration();
-          const screenshotExpectedNum = duration / screenlistInterval;
-          const currentScreenshotIndex = Math.floor((screenshotExpectedNum / 100) * prog);
-          if (screenlist[currentScreenshotIndex]) {
-            this.setState({
-              progress: prog,
-              currentScreenshot: screenlist[currentScreenshotIndex],
-            });
-          } else {
-            this.setState({
-              progress: prog,
-            });
-          }
-          this.player.seekTo(prog / 100);
-        }}
-        onDragStart={() => {
-          this.setState({ screenlistShowing: true });
-        }}
-        onDragEnd={() => {
-          this.setState({ screenlistShowing: false });
-        }}
-        thumb={
-          !ready ? null : (
-            <div
-              className={classes.screenlist.concat(
-                ' animated ',
-                !screenlistShowing ? 'fadeOut' : 'fadeIn',
-              )}
-            >
-              <div className={classes.screenlistImgWrapper}>
-                <img
-                  key={currentScreenshot.replace(/\.(jpeg|jpg|png|gif|svg)$/, '')}
-                  alt={currentScreenshot}
-                  src={currentScreenshot}
-                />
-              </div>
-            </div>
-          )
-        }
+      <Buffer
+        progress={progress}
+        ready={ready}
+        screenlistShowing={screenlistShowing}
+        currentScreenshot={currentScreenshot}
+        classes={classes}
+        onDrag={this.onBufferDrag}
+        onDragStart={this.onBufferDragStart}
+        onDragEnd={this.onBufferDragEnd}
       />
     );
   };
@@ -713,33 +684,12 @@ class VideoPlayer extends React.Component {
     const { classes } = this.props;
     const { ready, fullscreen } = this.state;
     return (
-      <IconButton
-        className={classes.controlBarButton}
-        disabled={!ready}
-        onClick={() => {
-          screenfull.toggle(findDOMNode(this));
-          this.setState({
-            fullscreen: !fullscreen,
-            controlBarHidden: true,
-          });
-        }}
-      >
-        {!fullscreen ? (
-          <Fullscreen
-            classes={{
-              colorPrimary: classes.controlBarButtonPrimaryColor,
-            }}
-            color="primary"
-          />
-        ) : (
-          <FullscreenExit
-            classes={{
-              colorPrimary: classes.controlBarButtonPrimaryColor,
-            }}
-            color="primary"
-          />
-        )}
-      </IconButton>
+      <Fullscreen
+        classes={classes}
+        ready={ready}
+        onClick={this.onFullscreenClick}
+        fullscreen={fullscreen}
+      />
     );
   };
 
@@ -774,7 +724,7 @@ class VideoPlayer extends React.Component {
 
   renderSeries = () => {
     const {
-      classes, series, onSourceChange, onSeriesItemClick,
+      classes, series, onSourceChange,
     } = this.props;
     const { ready, seriesShowing, seriesToggleButtonShowing } = this.state;
     return [
@@ -793,30 +743,10 @@ class VideoPlayer extends React.Component {
         classes={classes}
         series={series}
         onSourceChange={onSourceChange}
-        onSeriesItemClick={(video, ...args) => {
-          this.setState({
-            seriesShowing: false,
-            currentSrc: video.src,
-          });
-          if (onSourceChange) {
-            onSourceChange(video.src);
-          }
-          if (onSeriesItemClick) {
-            onSeriesItemClick(video, ...args);
-          }
-        }}
-        onSeriesToggleButtonMouseEnter={() => {
-          this.setState({ seriesToggleButtonShowing: true });
-        }}
-        onSeriesToggleButtonMouseLeave={() => {
-          this.setState({ seriesToggleButtonShowing: false });
-        }}
-        toggle={isSeriesShowing => {
-          this.setState({
-            seriesShowing:
-              typeof isSeriesShowing !== 'undefined' ? isSeriesShowing : !seriesShowing,
-          });
-        }}
+        onSeriesItemClick={this.onSeriesItemClick}
+        onSeriesToggleButtonMouseEnter={this.onSeriesToggleButtonMouseEnter}
+        onSeriesToggleButtonMouseLeave={this.onSeriesToggleButtonMouseLeave}
+        toggle={this.toggleSeries}
         ready={ready}
         open={seriesShowing}
         toggleButtonShowing={seriesToggleButtonShowing}

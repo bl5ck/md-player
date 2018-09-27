@@ -10,8 +10,6 @@ const parseProps = element => {
   const {
     src,
     srcDefault,
-    themePrimary,
-    themeSecondary,
     screenlist,
     screenlistInterval,
     series,
