@@ -263,7 +263,7 @@ const styles = theme => {
   };
 };
 
-class VideoPlayer extends React.Component {
+class Player extends React.Component {
   static propTypes = {
     controls: PropTypes.bool,
     src: PropTypes.string,
@@ -534,17 +534,16 @@ class VideoPlayer extends React.Component {
 
   onSeriesToggleButtonMouseEnter = () => {
     this.setState({ seriesToggleButtonShowing: true });
-  }
+  };
 
   onSeriesToggleButtonMouseLeave = () => {
     this.setState({ seriesToggleButtonShowing: false });
-  }
+  };
 
   toggleSeries = isSeriesShowing => {
     const { seriesShowing } = this.state;
     this.setState({
-      seriesShowing:
-        typeof isSeriesShowing !== 'undefined' ? isSeriesShowing : !seriesShowing,
+      seriesShowing: typeof isSeriesShowing !== 'undefined' ? isSeriesShowing : !seriesShowing,
     });
   };
 
@@ -723,9 +722,7 @@ class VideoPlayer extends React.Component {
   };
 
   renderSeries = () => {
-    const {
-      classes, series, onSourceChange,
-    } = this.props;
+    const { classes, series, onSourceChange } = this.props;
     const { ready, seriesShowing, seriesToggleButtonShowing } = this.state;
     return [
       <div
@@ -803,4 +800,4 @@ class VideoPlayer extends React.Component {
   }
 }
 
-export default withStyles(styles)(VideoPlayer);
+export default withStyles(styles)(Player);
