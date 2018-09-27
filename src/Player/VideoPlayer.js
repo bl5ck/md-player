@@ -9,9 +9,6 @@ import Slider from '@material-ui/lab/Slider';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import IconButton from '@material-ui/core/IconButton';
-import GridList from '@material-ui/core/GridList';
-import GridListTile from '@material-ui/core/GridListTile';
-import GridListTileBar from '@material-ui/core/GridListTileBar';
 // Icons
 import Fullscreen from '@material-ui/icons/Fullscreen';
 import FullscreenExit from '@material-ui/icons/FullscreenExit';
@@ -19,13 +16,13 @@ import VolumeUp from '@material-ui/icons/VolumeUp';
 import VolumeDown from '@material-ui/icons/VolumeDown';
 import VolumeOff from '@material-ui/icons/VolumeOff';
 import VolumeMute from '@material-ui/icons/VolumeMute';
-import Info from '@material-ui/icons/Info';
 import 'animate.css/animate.min.css';
 
 import CorePlayer from './CorePlayer';
 import PlayPause from './PlayPause';
 import PreviousNext5s from './PreviousNext5s';
 import Settings from './Settings';
+import Series from './Series';
 
 const progressSize = 80;
 const progressMargin = -progressSize / 2;
@@ -290,8 +287,8 @@ class VideoPlayer extends React.Component {
     screenlist: [],
     screenlistInterval: 0,
     series: [],
-    onSourceChange: null,
-    onSeriesItemClick: null,
+    onSourceChange: undefined,
+    onSeriesItemClick: undefined,
   };
 
   constructor(props) {
@@ -763,53 +760,14 @@ class VideoPlayer extends React.Component {
       classes, series, onSourceChange, onSeriesItemClick,
     } = this.props;
     const { ready } = this.state;
-    return !ready || !series.length ? null : (
-      <div className={classes.series}>
-        <GridList cellHeight={140} className={classes.gridList}>
-          {series.map(video => (
-            <GridListTile
-              className={classes.seriesItem}
-              key={video.thumbnail}
-              cols={2}
-              role="button"
-              onClick={() => {
-                if (onSeriesItemClick) {
-                  onSeriesItemClick(video);
-                }
-                if (onSourceChange) {
-                  onSourceChange(video.src);
-                }
-                this.setState({
-                  currentSrc: video.src,
-                });
-              }}
-            >
-              <img
-                src={video.thumbnail || (video.screenlist && video.screenlist[0])}
-                alt={video.title}
-              />
-              <GridListTileBar
-                title={video.title}
-                subtitle={(
-                  <span
-                    dangerouslySetInnerHTML={!video.subtitle ? null : { __html: video.subtitle }}
-                  />
-)}
-                actionIcon={(
-                  <IconButton className={classes.icon}>
-                    <Info
-                      classes={{
-                        colorPrimary: classes.controlBarButtonPrimaryColor,
-                      }}
-                      color="primary"
-                    />
-                  </IconButton>
-)}
-              />
-            </GridListTile>
-          ))}
-        </GridList>
-      </div>
+    return (
+      <Series
+        classes={classes}
+        series={series}
+        onSourceChange={onSourceChange}
+        onSeriesItemClick={onSeriesItemClick}
+        ready={ready}
+      />
     );
   };
 
